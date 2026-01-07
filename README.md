@@ -1,4 +1,4 @@
-# Benchmark Matmul (MAMF on Modal)
+# Benchmark Matmul MAMF
 
 This repo benchmarks **Maximum Achievable Matmul FLOPS (MAMF)** on GPUs using a Modal remote harness.
 
@@ -25,4 +25,4 @@ If you haven't already populated the volume with `mamf_finder.py`, uncomment the
 
 ## Attribution
 
-`mamf_finder.py` is copied from [Stas Bekman](https://github.com/stas00)'s repo [here](https://github.com/stas00/ml-engineering/blob/master/compute/accelerator/benchmarks/mamf-finder.py)
+`mamf_finder.py` is copied from [Stas Bekman](https://github.com/stas00)'s repo [here](https://github.com/stas00/ml-engineering/blob/master/compute/accelerator/benchmarks/mamf-finder.py) with minor modifications to add resumption

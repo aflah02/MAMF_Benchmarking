@@ -399,11 +399,20 @@ if __name__ == '__main__':
     parser.add_argument("--verbose", default=True, action=argparse.BooleanOptionalAction, help='log to stdout besides output_file?')
     parser.add_argument("--dtype", type=str, default="bfloat16",
                         help="Data type to use for the benchmark (e.g., float32, float16, bfloat16, float8_e4m3fn, torch.float8_e4m3fnuz)")
+    parser.add_argument("--resume_from", type=str, default=None, help="Resume after this shape, format MxNxK")
+
     args = parser.parse_args()
 
     m = args.m
     n = args.n
     k = args.k
+
+    resume_M = resume_N = resume_K = None
+    if args.resume_from:
+        resume_M, resume_N, resume_K = map(int, args.resume_from.split("x"))
+        resume_passed = False
+    else:
+        resume_passed = True
 
     dtype = get_torch_dtype(args.dtype)
     device = arch.device
@@ -485,6 +494,10 @@ geometric mean:  {all_tried_shapes_geometric_mean_tflops:.1f} TFLOPS
     for M in m:
         for N in n:
             for K in k:
+                if not resume_passed:
+                    if M == resume_M and N == resume_N and K == resume_K:
+                        resume_passed = True
+                    continue
                 num_shapes += 1
                 mean_tflops, median_tflops, max_tflops = benchmark_mm(M, N, K, dtype, device, args.num_iterations, args.num_warmup_iterations)
                 all_mean_tflops.append(mean_tflops)
