@@ -122,6 +122,8 @@ if df.empty:
 sweep_dim = state["sweep_dim"]
 df = df.copy()
 df["Sweep"] = df[sweep_dim].astype(int)
+df["Hardware"] = pd.Categorical(df["Hardware"], categories=state["hardware"], ordered=True)
+df = df.sort_values(["Sweep", "Hardware"])
 
 st.caption(
     f"dtype={state['dtype']} | metric={state['metric']} | sweep={sweep_dim} | "

@@ -9,6 +9,7 @@ st.caption("Compare a single shape across GPUs (same dtype).")
 
 conn = require_conn()
 dtype_list = get_distinct_values(conn, "dtype")
+hardware_list = get_distinct_values(conn, "hardware")
 
 with st.sidebar:
     st.markdown("### Filters")
@@ -24,12 +25,14 @@ if submitted:
     SELECT hardware, mean_tflops, median_tflops, max_tflops
     FROM matmul_results
     WHERE dtype=? AND m=? AND n=? AND k=?
-    ORDER BY mean_tflops DESC
     """
     df = pd.DataFrame(
         conn.execute(query, (dtype, m, n, k)).fetchall(),
         columns=["Hardware", "Mean TFLOPS", "Median TFLOPS", "Max TFLOPS"],
     )
+    if not df.empty:
+        df["Hardware"] = pd.Categorical(df["Hardware"], categories=hardware_list, ordered=True)
+        df = df.sort_values("Hardware")
     st.session_state["compare_last"] = {"dtype": dtype, "m": m, "n": n, "k": k, "df": df}
 
 state = st.session_state.get("compare_last")

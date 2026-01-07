@@ -77,7 +77,7 @@ def run_mamf(mamf_args: str) -> str:
     Runs mamf_finder.py and returns the output file path.
     """
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    output_path = f"/data/outputs/mamf_{timestamp}_{GPU}_py{PYTHON_VERSION}_torch{TORCH_VERSION}_base_img-{BASE_IMAGE}_ResumeFrom-{RESUME_FROM}.csv"
+    output_path = f"/data/outputs/mamf_{timestamp}_{GPU}_py{PYTHON_VERSION}_torch{TORCH_VERSION}_base_img-{BASE_IMAGE}_ResumeFrom-{RESUME_FROM}.txt"
 
     if not Path("/data/outputs").exists():
         Path("/data/outputs").mkdir(parents=True, exist_ok=True)

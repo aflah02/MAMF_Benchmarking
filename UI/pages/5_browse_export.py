@@ -2,7 +2,7 @@ import duckdb
 import pandas as pd
 import streamlit as st
 
-from ui_common import get_distinct_values, require_conn
+from ui_common import get_distinct_values, hardware_order_sql, require_conn
 
 
 def _build_in_clause(column: str, values: list[str]) -> tuple[str, list[str]]:
@@ -44,7 +44,7 @@ def _query_rows(
         params.append(int(k))
 
     order_map = {
-        "Hardware": "hardware ASC",
+        "Hardware": f"{hardware_order_sql('hardware')}, hardware ASC",
         "Dtype": "dtype ASC",
         "Shape (M,N,K)": "m ASC, n ASC, k ASC",
         "Mean TFLOPS (desc)": "mean_tflops DESC",
@@ -154,4 +154,3 @@ st.download_button(
     file_name="matmul_results_filtered.csv",
     mime="text/csv",
 )
-
