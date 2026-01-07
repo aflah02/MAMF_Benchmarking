@@ -78,9 +78,9 @@ def get_hardware_coverage(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
     WITH base AS (
       SELECT
         hardware,
-        COUNT(*) AS rows,
         COUNT(DISTINCT dtype) AS dtypes,
         COUNT(DISTINCT (m, n, k)) AS distinct_shapes,
+        MAX(max_tflops) AS peak_tflops,
         MAX(m) AS max_m,
         MAX(n) AS max_n,
         MAX(k) AS max_k
@@ -99,14 +99,33 @@ def get_hardware_coverage(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
         FROM matmul_results
       )
       WHERE rn = 1
+    ),
+    peakshape AS (
+      SELECT hardware, m AS peakshape_m, n AS peakshape_n, k AS peakshape_k
+      FROM (
+        SELECT
+          hardware,
+          m,
+          n,
+          k,
+          max_tflops,
+          ROW_NUMBER() OVER (PARTITION BY hardware ORDER BY max_tflops DESC, m DESC, n DESC, k DESC) AS rn
+        FROM matmul_results
+        WHERE max_tflops IS NOT NULL
+      )
+      WHERE rn = 1
     )
     SELECT
       base.*,
       maxshape.maxshape_m,
       maxshape.maxshape_n,
-      maxshape.maxshape_k
+      maxshape.maxshape_k,
+      peakshape.peakshape_m,
+      peakshape.peakshape_n,
+      peakshape.peakshape_k
     FROM base
     JOIN maxshape USING (hardware)
+    LEFT JOIN peakshape USING (hardware)
     ORDER BY """ + hardware_order_sql("hardware") + """, hardware
     """
     rows = conn.execute(query).fetchall()
@@ -114,15 +133,18 @@ def get_hardware_coverage(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
         rows,
         columns=[
             "hardware",
-            "rows",
             "dtypes",
             "distinct_shapes",
+            "peak_tflops",
             "max_m",
             "max_n",
             "max_k",
             "maxshape_m",
             "maxshape_n",
             "maxshape_k",
+            "peakshape_m",
+            "peakshape_n",
+            "peakshape_k",
         ],
     )
     if df.empty:
@@ -130,5 +152,14 @@ def get_hardware_coverage(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
 
     df["max_shape_by_mnk"] = (
         df["maxshape_m"].astype(str) + "×" + df["maxshape_n"].astype(str) + "×" + df["maxshape_k"].astype(str)
+    )
+    has_peak_shape = df["peakshape_m"].notna() & df["peakshape_n"].notna() & df["peakshape_k"].notna()
+    df["peak_shape"] = ""
+    df.loc[has_peak_shape, "peak_shape"] = (
+        df.loc[has_peak_shape, "peakshape_m"].astype(int).astype(str)
+        + "×"
+        + df.loc[has_peak_shape, "peakshape_n"].astype(int).astype(str)
+        + "×"
+        + df.loc[has_peak_shape, "peakshape_k"].astype(int).astype(str)
     )
     return df

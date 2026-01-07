@@ -28,7 +28,7 @@ image = (
     .add_local_dir(LOCAL_UI_DIR / "pages", str(REMOTE_UI_DIR / "pages"))
 )
 
-app = modal.App(name="mamf-ui", image=image)
+app = modal.App(name="mamf-explorer", image=image)
 
 
 @app.function(timeout=60 * 10)

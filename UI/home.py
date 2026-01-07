@@ -29,7 +29,7 @@ Note: The reported results use a Debian-slim based image from Modal with Python 
 ### How is MAMF measured?
 
 This project uses the `mamf_finder.py` script originally published by Stas Bekman in the
-`ml-engineering` repository (see the repo root `README.md` for attribution and link).
+`ml-engineering` repository.
 """
 )
 
@@ -38,19 +38,24 @@ left.metric("Rows", f"{stats['total_rows']:,}")
 mid.metric("GPUs", f"{stats['hardware_count']:,}")
 right.metric("Dtypes", f"{stats['dtype_count']:,}")
 
-st.subheader("Coverage:")
+st.subheader("Coverage & Broad Statistics:")
 st.text("I kicked off runs where each of M, N, K ranged from 0 to 20,480 in steps of 256 however not all runs are complete yet and hence coverage varies by GPU.")
 st.caption("Max shape uses lexicographic ordering by (M desc, N desc, K desc); some runs may be partial per GPU.")
 if coverage.empty:
     st.info("No coverage stats available.")
 else:
+    view = coverage[["hardware", "distinct_shapes", "max_shape_by_mnk", "peak_tflops", "peak_shape"]].copy()
+    # Streamlit's dataframe widget right-aligns numeric columns by default; cast to strings for uniform left alignment.
+    view["distinct_shapes"] = view["distinct_shapes"].map(lambda x: f"{int(x):,}")
+    view["peak_tflops"] = view["peak_tflops"].map(lambda x: f"{float(x):.1f}")
     st.dataframe(
-        coverage[["hardware", "rows", "distinct_shapes", "max_shape_by_mnk"]].rename(
+        view.rename(
             columns={
                 "hardware": "Hardware",
-                "rows": "Rows",
                 "distinct_shapes": "Distinct shapes",
                 "max_shape_by_mnk": "Max shape tried (M,N,K)",
+                "peak_tflops": "Peak TFLOPS observed",
+                "peak_shape": "Peak TFLOPS shape (M,N,K)",
             }
         ),
         use_container_width=True,
