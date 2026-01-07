@@ -9,7 +9,7 @@ from pathlib import Path
 import modal
 
 BASE_IMAGE="debian-slim"
-GPU = "H200" # Change to your desired GPU type
+GPU = "H100" # Change to your desired GPU type
 PYTHON_VERSION = "3.12" # Change to your desired Python version
 TORCH_VERSION = "2.9.0" # Change to your desired PyTorch version
 
@@ -17,7 +17,13 @@ TORCH_VERSION = "2.9.0" # Change to your desired PyTorch version
 M_RANGE = "0 20480 256"
 N_RANGE = "0 20480 256"
 K_RANGE = "0 20480 256"
+
+RESUME_FROM = "12032x16896x4864"
+
 MAMF_ARGS = f"--m_range {M_RANGE} --n_range {N_RANGE} --k_range {K_RANGE} --num_iterations 100 --num_warmup_iterations 50 --dtype bfloat16"
+
+if RESUME_FROM:
+    MAMF_ARGS += f" --resume_from {RESUME_FROM}"
 
 SUPPORTED_PYTHON_VERSIONS = ["3.10", "3.11", "3.12", "3.13"]
 SUPPORTED_TORCH_VERSIONS = [
@@ -34,7 +40,7 @@ assert TORCH_VERSION in SUPPORTED_TORCH_VERSIONS
 # -----------------------
 # Modal app + image
 # -----------------------
-APP_NAME = f"mamf-finder-{GPU}-py{PYTHON_VERSION}-torch{TORCH_VERSION}-base_img-{BASE_IMAGE}"
+APP_NAME = f"mamf-finder-{GPU}-py{PYTHON_VERSION}-torch{TORCH_VERSION}-base_img-{BASE_IMAGE}-ResumeFrom-{RESUME_FROM}"
   
 app = modal.App(APP_NAME)
 
@@ -50,8 +56,10 @@ if BASE_IMAGE == "debian-slim":
 # -----------------------
 vol = modal.Volume.from_name("vol-matmul-analysis", create_if_missing=True)
 
+# vol.remove_file("mamf_finder.py")
+
 # with vol.batch_upload(force=True) as batch:
-#     batch.put_file("mamf_finder.py", "mamf_finder.py")
+#     batch.put_file("mamf_finder.py", "/mamf_finder.py")
 
 VOLUME_MOUNT = {"/data": vol}
 
@@ -69,7 +77,7 @@ def run_mamf(mamf_args: str) -> str:
     Runs mamf_finder.py and returns the output file path.
     """
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    output_path = f"/data/outputs/mamf_{timestamp}_{GPU}_py{PYTHON_VERSION}_torch{TORCH_VERSION}_base_img-{BASE_IMAGE}.json"
+    output_path = f"/data/outputs/mamf_{timestamp}_{GPU}_py{PYTHON_VERSION}_torch{TORCH_VERSION}_base_img-{BASE_IMAGE}_ResumeFrom-{RESUME_FROM}.csv"
 
     if not Path("/data/outputs").exists():
         Path("/data/outputs").mkdir(parents=True, exist_ok=True)
