@@ -17,14 +17,14 @@ st.markdown(
 GPU + software stack (PyTorch/CUDA/cuBLAS, etc). The benchmark sweeps many `(M, N, K)` shapes and records the best
 achieved TFLOPS for each shape, giving you a map of **where the hardware is fast** and **where performance cliffs are**.
 
-Note: The reported results use a Debian-slim based image from Modal with Python 3.12 and PyTorch 2.9.0.
+Note: The reported results use a Debian-slim based image from Modal with Python 3.12 and PyTorch 2.9.0. At the moment all runs use BF16 and I plan to add FP8 in the future.
 
 ### Why should you care?
 
 - **Capacity planning**: estimate how close your workloads can get to peak throughput for the shapes you actually run.
 - **Hardware comparisons**: compare GPUs on the same shapes/dtype (not just a single cherry-picked benchmark).
 - **Performance debugging**: find regimes where you are bandwidth/launch-bound or hitting kernel selection issues.
-- **Regression tracking**: compare results across PyTorch/CUDA versions to spot wins/losses.
+- **Regression tracking**: compare results across PyTorch/CUDA versions to spot wins/losses [WIP].
 
 ### How is MAMF measured?
 
@@ -66,7 +66,7 @@ st.divider()
 
 st.subheader("Pages")
 st.write("- Lookup Shape: find TFLOPS for a single (M, N, K) on one GPU/dtype.")
-st.write("- Fast Shapes: discover the highest-throughput shapes for a fixed K.")
+st.write("- Fast & Slow Shapes: discover the best (and optionally worst) shapes for a fixed K.")
 st.write("- Scaling Curves: sweep M/N/K (hold others fixed) and compare across hardware.")
 st.write("- Compare Hardware: compare a single shape across GPUs (same dtype).")
 st.write("- Browse & Export: filter the full table and download CSV.")

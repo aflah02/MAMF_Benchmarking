@@ -11,10 +11,10 @@ if hasattr(st, "navigation") and hasattr(st, "Page"):
     pages = [
         st.Page("home.py", title="Home", icon="🏠"),
         st.Page("pages/1_lookup_shape.py", title="Lookup Shape", icon="🔎"),
-        st.Page("pages/2_fast_shapes.py", title="Fast Shapes", icon="🚀"),
+        st.Page("pages/2_fast_shapes.py", title="Fast & Slow Shapes", icon="🚀"),
         st.Page("pages/3_scaling_curves.py", title="Scaling Curves", icon="📈"),
-        st.Page("pages/4_compare_hardware.py", title="Compare Hardware", icon="📊"),
-        st.Page("pages/5_browse_export.py", title="Browse & Export", icon="📄"),
+        st.Page("pages/4_compare_hardware.py", title="Compare Hardware", icon="🧮"),
+        st.Page("pages/5_browse_export.py", title="Browse & Export", icon="📦"),
     ]
     st.navigation(pages).run()
 else:
