@@ -71,6 +71,14 @@ st.write("- Scaling Curves: sweep M/N/K (hold others fixed) and compare across h
 st.write("- Compare Hardware: compare a single shape across GPUs (same dtype).")
 st.write("- Browse & Export: filter the full table and download CSV.")
 
+st.divider()
+st.markdown(
+    """
+**GitHub**: [aflah02/MAMF_Benchmarking](https://github.com/aflah02/MAMF_Benchmarking)  
+**Built by**: [Aflah](https://aflah02.github.io/)
+"""
+)
+
 # with st.sidebar:
 #     st.markdown("### About")
 #     st.write("Use the pages to query the DuckDB dataset and visualize performance.")

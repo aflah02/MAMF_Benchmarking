@@ -9,7 +9,7 @@ from pathlib import Path
 import modal
 
 BASE_IMAGE="debian-slim"
-GPU = "H100" # Change to your desired GPU type
+GPU = "A100-80GB" # Change to your desired GPU type
 PYTHON_VERSION = "3.12" # Change to your desired Python version
 TORCH_VERSION = "2.9.0" # Change to your desired PyTorch version
 
@@ -18,9 +18,13 @@ M_RANGE = "0 20480 256"
 N_RANGE = "0 20480 256"
 K_RANGE = "0 20480 256"
 
-RESUME_FROM = "12032x16896x4864"
+# RESUME_FROM = "16384x17664x6400"
+RESUME_FROM = None
 
-MAMF_ARGS = f"--m_range {M_RANGE} --n_range {N_RANGE} --k_range {K_RANGE} --num_iterations 100 --num_warmup_iterations 50 --dtype bfloat16"
+# DTYPE = "float8_e4m3fn"
+DTYPE = "bfloat16"
+
+MAMF_ARGS = f"--m_range {M_RANGE} --n_range {N_RANGE} --k_range {K_RANGE} --num_iterations 100 --num_warmup_iterations 50 --dtype {DTYPE}"
 
 if RESUME_FROM:
     MAMF_ARGS += f" --resume_from {RESUME_FROM}"
@@ -40,7 +44,7 @@ assert TORCH_VERSION in SUPPORTED_TORCH_VERSIONS
 # -----------------------
 # Modal app + image
 # -----------------------
-APP_NAME = f"mamf-finder-{GPU}-py{PYTHON_VERSION}-torch{TORCH_VERSION}-base_img-{BASE_IMAGE}-ResumeFrom-{RESUME_FROM}"
+APP_NAME = f"mamf-finder-{GPU}-py{PYTHON_VERSION}-torch{TORCH_VERSION}-base_img-{BASE_IMAGE}-dtype-{DTYPE}-ResumeFrom-{RESUME_FROM}"
   
 app = modal.App(APP_NAME)
 

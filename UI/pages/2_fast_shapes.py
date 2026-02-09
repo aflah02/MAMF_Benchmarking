@@ -28,19 +28,23 @@ with st.sidebar:
 if submitted:
     def load_shapes(order: str) -> pd.DataFrame:
         query = f"""
-        SELECT m, n, mean_tflops
+        SELECT
+          m AS "M",
+          n AS "N",
+          mean_tflops AS "TFLOPS"
         FROM matmul_results
         WHERE hardware=? AND dtype=? AND k=?
         ORDER BY mean_tflops {order}
         LIMIT ?
         """
-        return pd.DataFrame(
-            conn.execute(query, (hardware, dtype, k_fix, top_n)).fetchall(),
-            columns=["M", "N", "TFLOPS"],
-        )
+        return conn.execute(query, (hardware, dtype, k_fix, top_n)).df()
 
     df_fast = load_shapes("DESC")
     df_slow = load_shapes("ASC") if show_slow else pd.DataFrame(columns=["M", "N", "TFLOPS"])
+    df_fast_csv = df_fast.to_csv(index=False).encode("utf-8") if not df_fast.empty else b""
+    df_slow_csv = (
+        df_slow.to_csv(index=False).encode("utf-8") if show_slow and not df_slow.empty else b""
+    )
     st.session_state["fast_shapes_last"] = {
         "hardware": hardware,
         "dtype": dtype,
@@ -49,6 +53,8 @@ if submitted:
         "show_slow": show_slow,
         "df_fast": df_fast,
         "df_slow": df_slow,
+        "df_fast_csv": df_fast_csv,
+        "df_slow_csv": df_slow_csv,
     }
 
 state = st.session_state.get("fast_shapes_last")
@@ -129,9 +135,10 @@ with tabs[1]:
         st.dataframe(df_fast, use_container_width=True, height=420)
         st.download_button(
             "Download CSV",
-            df_fast.to_csv(index=False).encode("utf-8"),
+            state.get("df_fast_csv", b""),
             file_name=f"shapes_fast_{state['hardware']}_{state['dtype']}_k{state['k']}.csv",
             mime="text/csv",
+            disabled=df_fast.empty,
         )
 
 if show_slow:
@@ -142,7 +149,8 @@ if show_slow:
             st.dataframe(df_slow, use_container_width=True, height=420)
             st.download_button(
                 "Download CSV",
-                df_slow.to_csv(index=False).encode("utf-8"),
+                state.get("df_slow_csv", b""),
                 file_name=f"shapes_slow_{state['hardware']}_{state['dtype']}_k{state['k']}.csv",
                 mime="text/csv",
+                disabled=df_slow.empty,
             )

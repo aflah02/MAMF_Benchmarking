@@ -66,87 +66,44 @@ def get_distinct_values(conn: duckdb.DuckDBPyConnection, column: str) -> list[st
 
 @st.cache_data(show_spinner=False, hash_funcs={duckdb.DuckDBPyConnection: lambda _: "duckdb_conn"})
 def get_db_stats(conn: duckdb.DuckDBPyConnection) -> dict[str, Any]:
-    total_rows = conn.execute("SELECT COUNT(*) FROM matmul_results").fetchone()[0]
-    hardware_count = conn.execute("SELECT COUNT(DISTINCT hardware) FROM matmul_results").fetchone()[0]
-    dtype_count = conn.execute("SELECT COUNT(DISTINCT dtype) FROM matmul_results").fetchone()[0]
+    total_rows, hardware_count, dtype_count = conn.execute(
+        """
+        SELECT
+          COUNT(*) AS total_rows,
+          COUNT(DISTINCT hardware) AS hardware_count,
+          COUNT(DISTINCT dtype) AS dtype_count
+        FROM matmul_results
+        """
+    ).fetchone()
     return {"total_rows": total_rows, "hardware_count": hardware_count, "dtype_count": dtype_count}
 
 
 @st.cache_data(show_spinner=False, hash_funcs={duckdb.DuckDBPyConnection: lambda _: "duckdb_conn"})
 def get_hardware_coverage(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
-    query = """
-    WITH base AS (
-      SELECT
-        hardware,
-        COUNT(DISTINCT dtype) AS dtypes,
-        COUNT(DISTINCT (m, n, k)) AS distinct_shapes,
-        MAX(max_tflops) AS peak_tflops,
-        MAX(m) AS max_m,
-        MAX(n) AS max_n,
-        MAX(k) AS max_k
-      FROM matmul_results
-      GROUP BY hardware
-    ),
-    maxshape AS (
-      SELECT hardware, m AS maxshape_m, n AS maxshape_n, k AS maxshape_k
-      FROM (
+    query = (
+        """
         SELECT
           hardware,
-          m,
-          n,
-          k,
-          ROW_NUMBER() OVER (PARTITION BY hardware ORDER BY m DESC, n DESC, k DESC) AS rn
+          COUNT(DISTINCT dtype) AS dtypes,
+          COUNT(DISTINCT (m, n, k)) AS distinct_shapes,
+          MAX(max_tflops) AS peak_tflops,
+          MAX(m) AS max_m,
+          MAX(n) AS max_n,
+          MAX(k) AS max_k,
+          arg_max(m, (m, n, k)) AS maxshape_m,
+          arg_max(n, (m, n, k)) AS maxshape_n,
+          arg_max(k, (m, n, k)) AS maxshape_k,
+          arg_max(m, (max_tflops, m, n, k)) FILTER (WHERE max_tflops IS NOT NULL) AS peakshape_m,
+          arg_max(n, (max_tflops, m, n, k)) FILTER (WHERE max_tflops IS NOT NULL) AS peakshape_n,
+          arg_max(k, (max_tflops, m, n, k)) FILTER (WHERE max_tflops IS NOT NULL) AS peakshape_k
         FROM matmul_results
-      )
-      WHERE rn = 1
-    ),
-    peakshape AS (
-      SELECT hardware, m AS peakshape_m, n AS peakshape_n, k AS peakshape_k
-      FROM (
-        SELECT
-          hardware,
-          m,
-          n,
-          k,
-          max_tflops,
-          ROW_NUMBER() OVER (PARTITION BY hardware ORDER BY max_tflops DESC, m DESC, n DESC, k DESC) AS rn
-        FROM matmul_results
-        WHERE max_tflops IS NOT NULL
-      )
-      WHERE rn = 1
+        GROUP BY hardware
+        ORDER BY """
+        + hardware_order_sql("hardware")
+        + """, hardware
+        """
     )
-    SELECT
-      base.*,
-      maxshape.maxshape_m,
-      maxshape.maxshape_n,
-      maxshape.maxshape_k,
-      peakshape.peakshape_m,
-      peakshape.peakshape_n,
-      peakshape.peakshape_k
-    FROM base
-    JOIN maxshape USING (hardware)
-    LEFT JOIN peakshape USING (hardware)
-    ORDER BY """ + hardware_order_sql("hardware") + """, hardware
-    """
-    rows = conn.execute(query).fetchall()
-    df = pd.DataFrame(
-        rows,
-        columns=[
-            "hardware",
-            "dtypes",
-            "distinct_shapes",
-            "peak_tflops",
-            "max_m",
-            "max_n",
-            "max_k",
-            "maxshape_m",
-            "maxshape_n",
-            "maxshape_k",
-            "peakshape_m",
-            "peakshape_n",
-            "peakshape_k",
-        ],
-    )
+    df = conn.execute(query).df()
     if df.empty:
         return df
 

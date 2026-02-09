@@ -12,7 +12,6 @@ def _build_in_clause(column: str, values: list[str]) -> tuple[str, list[str]]:
     return f" AND {column} IN ({placeholders})", values
 
 
-@st.cache_data(show_spinner=False, hash_funcs={duckdb.DuckDBPyConnection: lambda _: "duckdb_conn"})
 def _query_rows(
     conn: duckdb.DuckDBPyConnection,
     dtype_values: list[str],
@@ -61,10 +60,7 @@ def _query_rows(
     ORDER BY {order_sql}
     {limit_sql}
     """
-    return pd.DataFrame(
-        conn.execute(query, params).fetchall(),
-        columns=["hardware", "dtype", "m", "n", "k", "mean_tflops", "median_tflops", "max_tflops"],
-    )
+    return conn.execute(query, params).df()
 
 
 st.title("Browse & Export")
@@ -133,6 +129,7 @@ if submitted:
         "order_by": order_by,
         "limit": int(limit),
         "df": df,
+        "csv_bytes": None,
     }
 
 state = st.session_state.get("browse_export_last")
@@ -148,9 +145,20 @@ if df.empty:
 st.caption(f"Rows: {len(df):,}")
 st.dataframe(df, use_container_width=True, height=560)
 
-st.download_button(
-    "Download CSV",
-    df.to_csv(index=False).encode("utf-8"),
-    file_name="matmul_results_filtered.csv",
-    mime="text/csv",
-)
+col1, col2 = st.columns([1, 2])
+with col1:
+    if st.button("Prepare CSV", key="browse_export_prepare"):
+        with st.spinner("Preparing CSV..."):
+            csv_bytes = df.to_csv(index=False).encode("utf-8")
+        st.session_state["browse_export_last"] = {**state, "csv_bytes": csv_bytes}
+
+with col2:
+    csv_bytes = st.session_state.get("browse_export_last", {}).get("csv_bytes")
+    st.download_button(
+        "Download CSV",
+        data=csv_bytes or b"",
+        file_name="matmul_results_filtered.csv",
+        mime="text/csv",
+        disabled=csv_bytes is None,
+        use_container_width=True,
+    )

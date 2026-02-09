@@ -6,6 +6,15 @@ This repo benchmarks **Maximum Achievable Matmul FLOPS (MAMF)** on GPUs using a 
 
 - `modal_mamf_harness.py`: A Modal app that provisions a GPU worker, runs `mamf_finder.py` remotely, and writes results to a Modal `Volume` under `/data/outputs/`.
 - `mamf_finder.py`: Vendored benchmark script (see **Attribution**).
+- `UI/`: Streamlit explorer UI (deployable on Modal).
+- `UI_New/`: New FastAPI + HTMX + Tailwind UI (deployable on Modal).
+
+## Exploring results (UI)
+
+- Streamlit UI:
+  - `modal deploy UI/deploy_on_modal.py`
+- New UI (faster + prettier):
+  - `modal deploy UI_New/deploy_on_modal.py`
 
 ## Using `modal_mamf_harness.py`
 

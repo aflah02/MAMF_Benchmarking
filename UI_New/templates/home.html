@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="flex flex-col gap-6">
+    <div class="rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-950 via-slate-950 to-slate-900 p-6">
+      <div class="flex flex-col gap-1">
+        <h1 class="text-2xl font-semibold tracking-tight">Maximum Achievable Matmul FLOPS (MAMF)</h1>
+        <p class="text-sm text-slate-400">
+          A snappy, hackable UI for exploring matmul performance across shapes, dtypes, and hardware.
+        </p>
+      </div>
+      <div class="mt-5 grid gap-3 {% if stats.torch_version_count is defined %}sm:grid-cols-4{% else %}sm:grid-cols-3{% endif %}">
+        <div class="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
+          <div class="text-xs text-slate-400">Rows</div>
+          <div class="mt-1 text-2xl font-semibold tabular-nums">{{ "{:,}".format(stats.total_rows) }}</div>
+        </div>
+        <div class="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
+          <div class="text-xs text-slate-400">Hardware</div>
+          <div class="mt-1 text-2xl font-semibold tabular-nums">{{ stats.hardware_count }}</div>
+        </div>
+        {% if stats.torch_version_count is defined %}
+          <div class="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
+            <div class="text-xs text-slate-400">Torch versions</div>
+            <div class="mt-1 text-2xl font-semibold tabular-nums">{{ stats.torch_version_count }}</div>
+          </div>
+        {% endif %}
+        <div class="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
+          <div class="text-xs text-slate-400">Dtypes</div>
+          <div class="mt-1 text-2xl font-semibold tabular-nums">{{ stats.dtype_count }}</div>
+        </div>
+      </div>
+      <div class="mt-5 flex flex-wrap gap-2">
+        <a href="/lookup" class="rounded-lg bg-cyan-500/15 px-3 py-1.5 text-sm text-cyan-200 hover:bg-cyan-500/25">Lookup a shape</a>
+        <a href="/browse" class="rounded-lg bg-slate-800 px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-700">Browse & export</a>
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-6">
+      <div class="flex items-baseline justify-between gap-4">
+        <h2 class="text-lg font-semibold">Coverage</h2>
+        <div class="text-xs text-slate-500">peak = max(max_tflops)</div>
+      </div>
+      {% if not coverage %}
+        <div class="mt-3 rounded-xl border border-slate-800 bg-slate-950/40 p-4 text-sm text-slate-300">
+          No coverage data found.
+        </div>
+      {% else %}
+        {% set show_torch = coverage and (coverage[0].torch_versions is defined) %}
+        <div class="mt-4 overflow-x-auto">
+          <table class="w-full min-w-[860px] border-separate border-spacing-0 text-sm">
+            <thead>
+              <tr class="text-left text-xs text-slate-400">
+                <th class="border-b border-slate-800 px-3 py-2">Hardware</th>
+                {% if show_torch %}<th class="border-b border-slate-800 px-3 py-2">Torch</th>{% endif %}
+                <th class="border-b border-slate-800 px-3 py-2">Dtypes</th>
+                <th class="border-b border-slate-800 px-3 py-2">Shapes</th>
+                <th class="border-b border-slate-800 px-3 py-2">Peak TFLOPS</th>
+                <th class="border-b border-slate-800 px-3 py-2">Max shape</th>
+                <th class="border-b border-slate-800 px-3 py-2">Peak shape</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in coverage %}
+                <tr class="hover:bg-slate-900/40">
+                  <td class="border-b border-slate-900 px-3 py-2 font-medium text-slate-100">{{ row.hardware }}</td>
+                  {% if show_torch %}<td class="border-b border-slate-900 px-3 py-2 tabular-nums text-slate-200">{{ row.torch_versions }}</td>{% endif %}
+                  <td class="border-b border-slate-900 px-3 py-2 tabular-nums text-slate-200">{{ row.dtypes }}</td>
+                  <td class="border-b border-slate-900 px-3 py-2 tabular-nums text-slate-200">{{ "{:,}".format(row.distinct_shapes) }}</td>
+                  <td class="border-b border-slate-900 px-3 py-2 tabular-nums text-slate-200">
+                    {% if row.peak_tflops is not none %}{{ "{:.1f}".format(row.peak_tflops) }}{% endif %}
+                  </td>
+                  <td class="border-b border-slate-900 px-3 py-2 font-mono text-xs text-slate-300">{{ row.max_shape_by_mnk }}</td>
+                  <td class="border-b border-slate-900 px-3 py-2 font-mono text-xs text-slate-300">{{ row.peak_shape }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

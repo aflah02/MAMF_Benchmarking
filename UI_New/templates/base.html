@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ title }} · {{ app_title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            boxShadow: {
+              glow: "0 0 0 1px rgba(56,189,248,0.35), 0 12px 40px rgba(0,0,0,0.55)",
+            },
+          },
+        },
+      };
+    </script>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <style>
+      .htmx-indicator {
+        opacity: 0;
+        transition: opacity 150ms ease-in-out;
+      }
+      .htmx-request .htmx-indicator,
+      .htmx-request.htmx-indicator {
+        opacity: 1;
+      }
+    </style>
+    {% block extra_head %}{% endblock %}
+    <script id="mamf-ui-config" type="application/json">{{ ui_config_json | safe }}</script>
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body class="min-h-screen bg-slate-950 text-slate-100">
+    <div class="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
+      <div class="mx-auto flex max-w-6xl items-center justify-between gap-6 px-4 py-3">
+        <a href="/" class="group flex items-center gap-3">
+          <div
+            class="h-9 w-9 rounded-xl bg-gradient-to-br from-fuchsia-500 via-cyan-400 to-emerald-400 shadow-glow"
+          ></div>
+          <div class="leading-tight">
+            <div class="font-semibold tracking-tight">MAMF Explorer</div>
+            <div class="text-xs text-slate-400">FastAPI · HTMX · DuckDB</div>
+          </div>
+        </a>
+        <nav class="flex flex-wrap items-center gap-1 text-sm">
+          {% set p = request.url.path %}
+          {% macro nav_link(href, label) -%}
+          <a
+            href="{{ href }}"
+            class="rounded-lg px-3 py-1.5 transition {% if p == href %}bg-slate-800 text-slate-50{% else %}text-slate-300 hover:bg-slate-900 hover:text-slate-50{% endif %}"
+            >{{ label }}</a
+          >
+          {%- endmacro %}
+          {{ nav_link('/', 'Home') }}
+          {{ nav_link('/lookup', 'Lookup') }}
+          {{ nav_link('/fast-shapes', 'Fast shapes') }}
+          {{ nav_link('/scaling', 'Scaling') }}
+          {{ nav_link('/compare', 'Compare HW') }}
+          {{ nav_link('/compare-dtypes', 'Compare dtypes') }}
+          {{ nav_link('/compare-torch', 'Compare torch') }}
+          {{ nav_link('/browse', 'Browse/Export') }}
+        </nav>
+      </div>
+    </div>
+
+    <main class="mx-auto max-w-6xl px-4 py-7">
+      <div
+        id="loading"
+        class="htmx-indicator pointer-events-none fixed right-4 top-4 rounded-lg border border-slate-700 bg-slate-900/90 px-3 py-2 text-xs text-slate-200 shadow-lg"
+      >
+        Loading…
+      </div>
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="mx-auto max-w-6xl px-4 pb-10 text-xs text-slate-500">
+      <div class="mt-10 flex flex-wrap items-center justify-between gap-2 border-t border-slate-900 pt-4">
+        <div>DB: {{ db_path_display }}</div>
+        <div class="flex items-center gap-3">
+          <a class="hover:text-slate-200" href="/health">health</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

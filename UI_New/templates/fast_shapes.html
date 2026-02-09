@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+  <script src="https://cdn.plot.ly/plotly-2.30.0.min.js" defer></script>
+{% endblock %}
+
+{% block content %}
+  <div class="flex flex-col gap-6">
+    <div>
+      <h1 class="text-xl font-semibold tracking-tight">Fast & Slow Shapes</h1>
+      <p class="mt-1 text-sm text-slate-400">Explore the fastest shapes for a selected GPU/dtype (fixed K), optionally also the slowest.</p>
+    </div>
+
+    <div class="grid gap-4 lg:grid-cols-[420px_1fr]">
+      <form
+        class="rounded-2xl border border-slate-800 bg-slate-950/40 p-5"
+        method="get"
+        data-mamf-single-hardware-form
+        hx-get="/fast-shapes"
+        hx-target="#fast-shapes-result"
+        hx-swap="innerHTML"
+        hx-indicator="#loading"
+        hx-push-url="true"
+      >
+        <div class="grid gap-4">
+          <div>
+            <label class="text-xs text-slate-400">Hardware</label>
+            <select name="hardware" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm">
+              {% for hw in hardware_list %}
+                <option value="{{ hw }}" {% if hw == hardware %}selected{% endif %}>{{ hw }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div data-mamf-torch-group class="{% if (torch_versions | length) <= 1 %}hidden{% endif %}">
+            <label class="text-xs text-slate-400">Torch</label>
+            <select name="torch_version" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm">
+              {% for tv in torch_versions %}
+                <option value="{{ tv }}" {% if tv == torch_version %}selected{% endif %}>{{ tv }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400">Dtype</label>
+            <select name="dtype" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm">
+              {% for dt in dtype_list %}
+                <option value="{{ dt }}" {% if dt == dtype %}selected{% endif %}>{{ dt }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs text-slate-400">Fixed K</label>
+              <input name="k_fix" type="number" step="256" min="256" value="{{ k_fix }}" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-400">N shapes</label>
+              <input name="top_n" type="number" step="1" min="10" max="5000" value="{{ top_n }}" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm" />
+            </div>
+          </div>
+          <label class="flex items-center gap-2 text-sm text-slate-200">
+            <input type="checkbox" name="show_slow" value="true" {% if show_slow %}checked{% endif %} class="h-4 w-4 rounded border-slate-700 bg-slate-950" />
+            Show slow shapes too
+          </label>
+          <button type="submit" class="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-cyan-400">
+            Run
+          </button>
+          <div class="text-xs text-slate-500">Uses WebGL scatter (fast) + URL-state for sharing.</div>
+        </div>
+      </form>
+
+      <div id="fast-shapes-result">
+        {% include "partials/fast_shapes_result.html" %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

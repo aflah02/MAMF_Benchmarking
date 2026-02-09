@@ -31,7 +31,7 @@ image = (
 app = modal.App(name="mamf-explorer", image=image)
 
 
-@app.function(timeout=60 * 10)
+@app.function(timeout=60 * 10, min_containers=1)
 @modal.web_server(8000)
 def run_streamlit():
     target = shlex.quote(str(REMOTE_UI_DIR / "app.py"))

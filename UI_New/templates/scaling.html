@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+  <script src="https://cdn.plot.ly/plotly-2.30.0.min.js" defer></script>
+{% endblock %}
+
+{% block content %}
+  <div class="flex flex-col gap-6">
+    <div>
+      <h1 class="text-xl font-semibold tracking-tight">Scaling Curves</h1>
+      <p class="mt-1 text-sm text-slate-400">Sweep one of M/N/K, hold the others fixed, and compare TFLOPS across hardware.</p>
+    </div>
+
+    <div class="grid gap-4 lg:grid-cols-[420px_1fr]">
+      <form
+        class="rounded-2xl border border-slate-800 bg-slate-950/40 p-5"
+        method="get"
+        hx-get="/scaling"
+        hx-target="#scaling-result"
+        hx-swap="innerHTML"
+        hx-indicator="#loading"
+        hx-push-url="true"
+      >
+        <div class="grid gap-4">
+          <div>
+            <label class="text-xs text-slate-400">Dtype</label>
+            <select name="dtype" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm">
+              {% for dt in dtype_list %}
+                <option value="{{ dt }}" {% if dt == dtype %}selected{% endif %}>{{ dt }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          {% if torch_versions %}
+            <div>
+              <label class="text-xs text-slate-400">Torch</label>
+              <select name="torch_version" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm">
+                {% for tv in torch_versions %}
+                  <option value="{{ tv }}" {% if tv == torch_version %}selected{% endif %}>{{ tv }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          {% endif %}
+          <div>
+            <label class="text-xs text-slate-400">Metric</label>
+            <select name="metric" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm">
+              <option value="mean_tflops" {% if metric == "mean_tflops" %}selected{% endif %}>Mean TFLOPS</option>
+              <option value="median_tflops" {% if metric == "median_tflops" %}selected{% endif %}>Median TFLOPS</option>
+              <option value="max_tflops" {% if metric == "max_tflops" %}selected{% endif %}>Max TFLOPS</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400">Hardware (multi-select)</label>
+            <select name="hardware" multiple size="7" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm">
+              {% for hw in hardware_list %}
+                <option value="{{ hw }}" {% if hw in hardware %}selected{% endif %}>{{ hw }}</option>
+              {% endfor %}
+            </select>
+            <div class="mt-1 text-xs text-slate-500">Hold Ctrl/Cmd to select multiple.</div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs text-slate-400">Sweep</label>
+              <select name="sweep_dim" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm">
+                <option value="m" {% if sweep_dim == "M" %}selected{% endif %}>M</option>
+                <option value="n" {% if sweep_dim == "N" %}selected{% endif %}>N</option>
+                <option value="k" {% if sweep_dim == "K" %}selected{% endif %}>K</option>
+              </select>
+            </div>
+            <div class="flex items-end gap-2">
+              <label class="flex items-center gap-2 text-sm text-slate-200">
+                <input type="checkbox" name="log_x" value="true" {% if log_x %}checked{% endif %} class="h-4 w-4 rounded border-slate-700 bg-slate-950" />
+                Log X
+              </label>
+              <label class="flex items-center gap-2 text-sm text-slate-200">
+                <input type="checkbox" name="log_y" value="true" {% if log_y %}checked{% endif %} class="h-4 w-4 rounded border-slate-700 bg-slate-950" />
+                Log Y
+              </label>
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <label class="text-xs text-slate-400">Fixed M</label>
+              <input name="m_fix" type="number" step="256" min="256" value="{{ m_fix }}" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-400">Fixed N</label>
+              <input name="n_fix" type="number" step="256" min="256" value="{{ n_fix }}" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-400">Fixed K</label>
+              <input name="k_fix" type="number" step="256" min="256" value="{{ k_fix }}" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm" />
+            </div>
+          </div>
+          <button type="submit" class="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-cyan-400">Run</button>
+        </div>
+      </form>
+
+      <div id="scaling-result">
+        {% include "partials/scaling_result.html" %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

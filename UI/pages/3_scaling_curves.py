@@ -86,16 +86,19 @@ if submitted:
         fixed_params.append(fixed[dim])
 
     query = f"""
-    SELECT hardware, m, n, k, {metric} AS tflops
+    SELECT
+      hardware AS "Hardware",
+      m AS "M",
+      n AS "N",
+      k AS "K",
+      {metric} AS "TFLOPS"
     FROM matmul_results
     WHERE dtype=? {in_clause} {fixed_clause}
     ORDER BY {sweep_dim.lower()} ASC, hardware ASC
     """
     sql_params: list[object] = [dtype, *params, *fixed_params]
-    df = pd.DataFrame(
-        conn.execute(query, sql_params).fetchall(),
-        columns=["Hardware", "M", "N", "K", "TFLOPS"],
-    )
+    df = conn.execute(query, sql_params).df()
+    csv_bytes = df.to_csv(index=False).encode("utf-8") if not df.empty else b""
     st.session_state["scaling_last"] = {
         "dtype": dtype,
         "metric": metric,
@@ -107,6 +110,7 @@ if submitted:
         "log_x": log_x,
         "log_y": log_y,
         "df": df,
+        "csv_bytes": csv_bytes,
     }
 
 state = st.session_state.get("scaling_last")
@@ -155,10 +159,11 @@ with tabs[1]:
     st.dataframe(out, use_container_width=True, height=520)
     st.download_button(
         "Download CSV",
-        out.to_csv(index=False).encode("utf-8"),
+        state.get("csv_bytes", b""),
         file_name=(
             f"scaling_{state['dtype']}_{state['metric']}_sweep{state['sweep_dim']}_"
             f"M{state['m_fix']}_N{state['n_fix']}_K{state['k_fix']}.csv"
         ),
         mime="text/csv",
+        disabled=out.empty,
     )
