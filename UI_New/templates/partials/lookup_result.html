@@ -16,6 +16,9 @@
       <div class="mt-1 font-mono text-xs text-slate-300">
         All GPUs · torch={{ torch_version }} · {{ dtype }} · {{ m }}×{{ n }}×{{ k }}
       </div>
+      <div class="mt-2 text-xs text-slate-500">
+        “Not found” usually means that GPU doesn’t have results for this exact (dtype, torch, shape) combination in the dataset.
+      </div>
       <div class="mt-4 overflow-x-auto">
         <table class="w-full min-w-[760px] border-separate border-spacing-0 text-sm">
           <thead>
@@ -31,7 +34,7 @@
               <tr class="hover:bg-slate-900/40">
                 <td class="border-b border-slate-900 px-3 py-2 text-slate-200">{{ r.hardware }}</td>
                 {% if r.result is none %}
-                  <td class="border-b border-slate-900 px-3 py-2 text-slate-500" colspan="3">Not found</td>
+                  <td class="border-b border-slate-900 px-3 py-2 text-slate-500" colspan="3">Not found for this dtype/torch</td>
                 {% else %}
                   <td class="border-b border-slate-900 px-3 py-2 tabular-nums text-slate-200">{{ "{:.1f}".format(r.result.mean_tflops) }}</td>
                   <td class="border-b border-slate-900 px-3 py-2 tabular-nums text-slate-200">{{ "{:.1f}".format(r.result.median_tflops) }}</td>

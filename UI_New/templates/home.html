@@ -2,75 +2,384 @@
 
 {% block content %}
   <div class="flex flex-col gap-6">
-    <div class="rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-950 via-slate-950 to-slate-900 p-6">
-      <div class="flex flex-col gap-1">
-        <h1 class="text-2xl font-semibold tracking-tight">Maximum Achievable Matmul FLOPS (MAMF)</h1>
-        <p class="text-sm text-slate-400">
-          A snappy, hackable UI for exploring matmul performance across shapes, dtypes, and hardware.
-        </p>
-      </div>
-      <div class="mt-5 grid gap-3 {% if stats.torch_version_count is defined %}sm:grid-cols-4{% else %}sm:grid-cols-3{% endif %}">
-        <div class="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
-          <div class="text-xs text-slate-400">Rows</div>
-          <div class="mt-1 text-2xl font-semibold tabular-nums">{{ "{:,}".format(stats.total_rows) }}</div>
-        </div>
-        <div class="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
-          <div class="text-xs text-slate-400">Hardware</div>
-          <div class="mt-1 text-2xl font-semibold tabular-nums">{{ stats.hardware_count }}</div>
-        </div>
-        {% if stats.torch_version_count is defined %}
-          <div class="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
-            <div class="text-xs text-slate-400">Torch versions</div>
-            <div class="mt-1 text-2xl font-semibold tabular-nums">{{ stats.torch_version_count }}</div>
+    <section class="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 p-6" data-mamf-hero>
+      <canvas data-mamf-hero-canvas class="pointer-events-none absolute inset-0 h-full w-full opacity-90"></canvas>
+      <div class="pointer-events-none absolute inset-0 bg-gradient-to-br from-slate-950/85 via-slate-950/45 to-slate-900/85"></div>
+      <div class="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-cyan-500/20 blur-3xl"></div>
+      <div class="pointer-events-none absolute -left-44 -bottom-44 h-[520px] w-[520px] rounded-full bg-fuchsia-500/15 blur-3xl"></div>
+
+      <div class="relative z-10 grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
+        <div class="flex flex-col gap-5">
+          <div>
+            <div class="text-xs uppercase tracking-widest text-slate-500">MAMF Explorer</div>
+            <h1 class="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+              <span class="bg-gradient-to-r from-slate-50 via-cyan-200 to-fuchsia-200 bg-clip-text text-transparent"
+                >Maximum Achievable Matmul FLOPS</span
+              >
+            </h1>
+            <p class="mt-2 max-w-2xl text-sm text-slate-300">
+              Explore matmul performance across shapes, dtypes, and GPUs — with shareable URLs and CSV export.
+            </p>
           </div>
-        {% endif %}
-        <div class="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
-          <div class="text-xs text-slate-400">Dtypes</div>
-          <div class="mt-1 text-2xl font-semibold tabular-nums">{{ stats.dtype_count }}</div>
+
+          <!-- <div class="flex flex-wrap gap-2">
+            <span class="rounded-full border border-slate-800 bg-slate-950/50 px-3 py-1 text-xs text-slate-200">
+              {% if baseline_torch_version %}Baseline torch {{ baseline_torch_version }}{% else %}Torch: n/a{% endif %}
+            </span>
+            {% if multi_torch_hardware and multi_torch_versions %}
+              <span class="rounded-full border border-slate-800 bg-slate-950/50 px-3 py-1 text-xs text-slate-200">
+                {{ multi_torch_hardware[0] }}: {{ multi_torch_versions | join(" · ") }}
+              </span>
+            {% endif %}
+            <span class="rounded-full border border-slate-800 bg-slate-950/50 px-3 py-1 text-xs text-slate-200">
+              {{ stats.hardware_count }} GPUs · {{ stats.dtype_count }} dtypes
+            </span>
+          </div> -->
+
+          <div class="grid gap-3 {% if stats.torch_version_count is defined %}sm:grid-cols-4{% else %}sm:grid-cols-3{% endif %}">
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/35 p-4">
+              <div class="text-xs text-slate-400">Rows</div>
+              <div class="mt-1 text-2xl font-semibold tabular-nums">{{ "{:,}".format(stats.total_rows) }}</div>
+            </div>
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/35 p-4">
+              <div class="text-xs text-slate-400">Hardware</div>
+              <div class="mt-1 text-2xl font-semibold tabular-nums">{{ stats.hardware_count }}</div>
+            </div>
+            {% if stats.torch_version_count is defined %}
+              <div class="rounded-2xl border border-slate-800 bg-slate-950/35 p-4">
+                <div class="text-xs text-slate-400">Torch versions</div>
+                <div class="mt-1 text-2xl font-semibold tabular-nums">{{ stats.torch_version_count }}</div>
+              </div>
+            {% endif %}
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/35 p-4">
+              <div class="text-xs text-slate-400">Dtypes</div>
+              <div class="mt-1 text-2xl font-semibold tabular-nums">{{ stats.dtype_count }}</div>
+            </div>
+          </div>
+
+          <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <a
+              href="/lookup"
+              data-mamf-tilt
+              data-mamf-tilt-max="7"
+              class="group relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/30 p-4 transition hover:border-cyan-500/40 hover:bg-slate-950/50"
+            >
+              <div
+                data-mamf-tilt-glare
+                class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200"
+                style="background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(56,189,248,0.22), transparent 55%);"
+              ></div>
+              <div class="relative">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="text-sm font-semibold tracking-tight text-slate-100">Lookup a shape</div>
+                  <div class="text-xs text-slate-500 group-hover:text-slate-300">/lookup</div>
+                </div>
+                <div class="mt-2 text-xs text-slate-400">Single (M,N,K) → mean/median/max TFLOPS.</div>
+              </div>
+            </a>
+
+            <a
+              href="/fast-shapes"
+              data-mamf-tilt
+              data-mamf-tilt-max="7"
+              class="group relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/30 p-4 transition hover:border-fuchsia-500/40 hover:bg-slate-950/50"
+            >
+              <div
+                data-mamf-tilt-glare
+                class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200"
+                style="background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(217,70,239,0.20), transparent 55%);"
+              ></div>
+              <div class="relative">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="text-sm font-semibold tracking-tight text-slate-100">Fast shapes</div>
+                  <div class="text-xs text-slate-500 group-hover:text-slate-300">/fast-shapes</div>
+                </div>
+                <div class="mt-2 text-xs text-slate-400">WebGL scatter of the fastest (and slowest) shapes.</div>
+              </div>
+            </a>
+
+            <a
+              href="/scaling"
+              data-mamf-tilt
+              data-mamf-tilt-max="7"
+              class="group relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/30 p-4 transition hover:border-emerald-500/35 hover:bg-slate-950/50"
+            >
+              <div
+                data-mamf-tilt-glare
+                class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200"
+                style="background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(16,185,129,0.20), transparent 55%);"
+              ></div>
+              <div class="relative">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="text-sm font-semibold tracking-tight text-slate-100">Scaling curves</div>
+                  <div class="text-xs text-slate-500 group-hover:text-slate-300">/scaling</div>
+                </div>
+                <div class="mt-2 text-xs text-slate-400">Sweep M/N/K and compare GPUs on a chart.</div>
+              </div>
+            </a>
+
+            <a
+              href="/compare"
+              data-mamf-tilt
+              data-mamf-tilt-max="7"
+              class="group relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/30 p-4 transition hover:border-sky-500/35 hover:bg-slate-950/50"
+            >
+              <div
+                data-mamf-tilt-glare
+                class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200"
+                style="background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(14,165,233,0.20), transparent 55%);"
+              ></div>
+              <div class="relative">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="text-sm font-semibold tracking-tight text-slate-100">Compare GPUs</div>
+                  <div class="text-xs text-slate-500 group-hover:text-slate-300">/compare</div>
+                </div>
+                <div class="mt-2 text-xs text-slate-400">One shape, one dtype → rank hardware.</div>
+              </div>
+            </a>
+
+            <a
+              href="/compare-dtypes"
+              data-mamf-tilt
+              data-mamf-tilt-max="7"
+              class="group relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/30 p-4 transition hover:border-teal-500/35 hover:bg-slate-950/50"
+            >
+              <div
+                data-mamf-tilt-glare
+                class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200"
+                style="background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(20,184,166,0.20), transparent 55%);"
+              ></div>
+              <div class="relative">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="text-sm font-semibold tracking-tight text-slate-100">Compare dtypes</div>
+                  <div class="text-xs text-slate-500 group-hover:text-slate-300">/compare-dtypes</div>
+                </div>
+                <div class="mt-2 text-xs text-slate-400">Same GPU + shape → compare dtypes.</div>
+              </div>
+            </a>
+
+            <a
+              href="/compare-torch"
+              data-mamf-tilt
+              data-mamf-tilt-max="7"
+              class="group relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/30 p-4 transition hover:border-rose-500/35 hover:bg-slate-950/50"
+            >
+              <div
+                data-mamf-tilt-glare
+                class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200"
+                style="background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(244,63,94,0.18), transparent 55%);"
+              ></div>
+              <div class="relative">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="text-sm font-semibold tracking-tight text-slate-100">Compare torch</div>
+                  <div class="text-xs text-slate-500 group-hover:text-slate-300">/compare-torch</div>
+                </div>
+                <div class="mt-2 text-xs text-slate-400">Same GPU + dtype → compare torch versions.</div>
+              </div>
+            </a>
+
+            <a
+              href="/compare-configs"
+              data-mamf-tilt
+              data-mamf-tilt-max="7"
+              class="group relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/30 p-4 transition hover:border-violet-500/35 hover:bg-slate-950/50"
+            >
+              <div
+                data-mamf-tilt-glare
+                class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200"
+                style="background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(139,92,246,0.20), transparent 55%);"
+              ></div>
+              <div class="relative">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="text-sm font-semibold tracking-tight text-slate-100">Versus</div>
+                  <div class="text-xs text-slate-500 group-hover:text-slate-300">/compare-configs</div>
+                </div>
+                <div class="mt-2 text-xs text-slate-400">Find which shapes config A beats config B.</div>
+              </div>
+            </a>
+
+            <a
+              href="/browse"
+              data-mamf-tilt
+              data-mamf-tilt-max="7"
+              class="group relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/30 p-4 transition hover:border-slate-600 hover:bg-slate-950/50"
+            >
+              <div
+                data-mamf-tilt-glare
+                class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200"
+                style="background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(148,163,184,0.18), transparent 55%);"
+              ></div>
+              <div class="relative">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="text-sm font-semibold tracking-tight text-slate-100">Browse & export</div>
+                  <div class="text-xs text-slate-500 group-hover:text-slate-300">/browse</div>
+                </div>
+                <div class="mt-2 text-xs text-slate-400">Filter rows and download matching CSV.</div>
+              </div>
+            </a>
+
+            <a
+              href="/leaderboard"
+              data-mamf-tilt
+              data-mamf-tilt-max="7"
+              class="group relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/30 p-4 transition hover:border-cyan-500/40 hover:bg-slate-950/50"
+            >
+              <div
+                data-mamf-tilt-glare
+                class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200"
+                style="background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(56,189,248,0.22), transparent 55%);"
+              ></div>
+              <div class="relative">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="text-sm font-semibold tracking-tight text-slate-100">Leaderboard</div>
+                  <div class="text-xs text-slate-500 group-hover:text-slate-300">/leaderboard</div>
+                </div>
+                <div class="mt-2 text-xs text-slate-400">Top shapes by mean/median/max TFLOPS.</div>
+              </div>
+            </a>
+
+            <a
+              href="/speedup"
+              data-mamf-tilt
+              data-mamf-tilt-max="7"
+              class="group relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/30 p-4 transition hover:border-fuchsia-500/40 hover:bg-slate-950/50"
+            >
+              <div
+                data-mamf-tilt-glare
+                class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200"
+                style="background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(217,70,239,0.20), transparent 55%);"
+              ></div>
+              <div class="relative">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="text-sm font-semibold tracking-tight text-slate-100">FP8 speedup</div>
+                  <div class="text-xs text-slate-500 group-hover:text-slate-300">/speedup</div>
+                </div>
+                <div class="mt-2 text-xs text-slate-400">FP8 vs BF16 speedup distribution.</div>
+              </div>
+            </a>
+
+            <a
+              href="/stability"
+              data-mamf-tilt
+              data-mamf-tilt-max="7"
+              class="group relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/30 p-4 transition hover:border-amber-400/35 hover:bg-slate-950/50"
+            >
+              <div
+                data-mamf-tilt-glare
+                class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200"
+                style="background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(251,191,36,0.18), transparent 55%);"
+              ></div>
+              <div class="relative">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="text-sm font-semibold tracking-tight text-slate-100">Stability</div>
+                  <div class="text-xs text-slate-500 group-hover:text-slate-300">/stability</div>
+                </div>
+                <div class="mt-2 text-xs text-slate-400">Find max ≫ median outliers.</div>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-3">
+          <div class="rounded-2xl border border-slate-800 bg-slate-950/35 p-5">
+            <h3 class="text-sm font-semibold text-slate-100">What is MAMF?</h3>
+            <p class="mt-2 text-sm text-slate-300">
+              MAMF (Maximum Achievable Matmul FLOPS) is a practical upper bound on matrix-multiplication throughput for a given GPU + software stack (PyTorch/CUDA/cuBLAS, etc). The benchmark sweeps many (M, N, K) shapes and records the best achieved TFLOPS for each shape, giving you a map of where the hardware is fast and where performance cliffs are.
+            </p>
+            <p class="mt-3 text-sm text-slate-300">
+              Note: The reported results use a Debian-slim based image with Python 3.12. Some runs (L40S, A40, and V100) were performed on other hardware.
+            </p>
+
+            <div class="mt-4">
+              <div class="text-sm font-semibold text-slate-100">Why should you care?</div>
+              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-300">
+                <li>Capacity planning: estimate how close your workloads can get to peak throughput for the shapes you actually run.</li>
+                <li>Hardware comparisons: compare GPUs on the same shapes/dtype (not just a single cherry-picked benchmark).</li>
+                <li>Performance debugging: find regimes where you are bandwidth/launch-bound or hitting kernel selection issues.</li>
+                <li>Regression tracking: compare results across PyTorch/CUDA versions to spot wins/losses</li>
+              </ul>
+            </div>
+
+            <div class="mt-4">
+              <div class="text-sm font-semibold text-slate-100">How is MAMF measured?</div>
+              <p class="mt-2 text-sm text-slate-300">
+                This project uses the <span class="font-mono text-xs text-slate-200">mamf_finder.py</span> script originally published by Stas Bekman in the ml-engineering repository.
+              </p>
+            </div>
+
+            <div class="mt-4 text-xs text-slate-500">
+              Tip: open <span class="text-slate-300">Lookup</span> and select <span class="text-slate-300">All GPUs</span> to compare the same shape across everything.
+            </div>
+          </div>
+
+
         </div>
       </div>
-      <div class="mt-5 flex flex-wrap gap-2">
-        <a href="/lookup" class="rounded-lg bg-cyan-500/15 px-3 py-1.5 text-sm text-cyan-200 hover:bg-cyan-500/25">Lookup a shape</a>
-        <a href="/browse" class="rounded-lg bg-slate-800 px-3 py-1.5 text-sm text-slate-100 hover:bg-slate-700">Browse & export</a>
-      </div>
-    </div>
+    </section>
 
     <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-6">
       <div class="flex items-baseline justify-between gap-4">
         <h2 class="text-lg font-semibold">Coverage</h2>
-        <div class="text-xs text-slate-500">peak = max(max_tflops)</div>
+        <div class="text-xs text-slate-500">peak = max(max_tflops) per config</div>
       </div>
-      {% if not coverage %}
+      {% if not coverage_rows %}
         <div class="mt-3 rounded-xl border border-slate-800 bg-slate-950/40 p-4 text-sm text-slate-300">
           No coverage data found.
         </div>
       {% else %}
-        {% set show_torch = coverage and (coverage[0].torch_versions is defined) %}
         <div class="mt-4 overflow-x-auto">
-          <table class="w-full min-w-[860px] border-separate border-spacing-0 text-sm">
+          <table class="w-full min-w-[980px] border-separate border-spacing-0 text-sm">
             <thead>
               <tr class="text-left text-xs text-slate-400">
                 <th class="border-b border-slate-800 px-3 py-2">Hardware</th>
-                {% if show_torch %}<th class="border-b border-slate-800 px-3 py-2">Torch</th>{% endif %}
-                <th class="border-b border-slate-800 px-3 py-2">Dtypes</th>
+                <th class="border-b border-slate-800 px-3 py-2">Torch</th>
+                <th class="border-b border-slate-800 px-3 py-2">Dtype</th>
                 <th class="border-b border-slate-800 px-3 py-2">Shapes</th>
                 <th class="border-b border-slate-800 px-3 py-2">Peak TFLOPS</th>
-                <th class="border-b border-slate-800 px-3 py-2">Max shape</th>
+                <th class="border-b border-slate-800 px-3 py-2">
+                  <span class="inline-flex items-center gap-1">
+                    % Peak
+                    <span
+                      class="cursor-help text-slate-500"
+                      title="% of Peak NVIDIA reported flops (no sparsity)."
+                      aria-label="% of Peak NVIDIA reported flops"
+                      >?</span
+                    >
+                  </span>
+                </th>
                 <th class="border-b border-slate-800 px-3 py-2">Peak shape</th>
               </tr>
             </thead>
             <tbody>
-              {% for row in coverage %}
+              {% for row in coverage_rows %}
                 <tr class="hover:bg-slate-900/40">
-                  <td class="border-b border-slate-900 px-3 py-2 font-medium text-slate-100">{{ row.hardware }}</td>
-                  {% if show_torch %}<td class="border-b border-slate-900 px-3 py-2 tabular-nums text-slate-200">{{ row.torch_versions }}</td>{% endif %}
-                  <td class="border-b border-slate-900 px-3 py-2 tabular-nums text-slate-200">{{ row.dtypes }}</td>
+                  {% if row.show_hardware %}
+                    <td class="border-b border-slate-900 px-3 py-2 align-top font-medium text-slate-100" rowspan="{{ row.hardware_rowspan }}">
+                      {{ row.hardware }}
+                    </td>
+                  {% endif %}
+
+                  {% if row.show_torch %}
+                    <td class="border-b border-slate-900 px-3 py-2 align-top font-mono text-xs text-slate-300" rowspan="{{ row.torch_rowspan }}">
+                      {% if row.torch_version %}{{ row.torch_version }}{% else %}<span class="text-slate-500">n/a</span>{% endif %}
+                    </td>
+                  {% endif %}
+
+                  <td class="border-b border-slate-900 px-3 py-2 font-mono text-xs text-slate-300">{{ row.dtype }}</td>
                   <td class="border-b border-slate-900 px-3 py-2 tabular-nums text-slate-200">{{ "{:,}".format(row.distinct_shapes) }}</td>
                   <td class="border-b border-slate-900 px-3 py-2 tabular-nums text-slate-200">
                     {% if row.peak_tflops is not none %}{{ "{:.1f}".format(row.peak_tflops) }}{% endif %}
                   </td>
-                  <td class="border-b border-slate-900 px-3 py-2 font-mono text-xs text-slate-300">{{ row.max_shape_by_mnk }}</td>
-                  <td class="border-b border-slate-900 px-3 py-2 font-mono text-xs text-slate-300">{{ row.peak_shape }}</td>
+                  <td class="border-b border-slate-900 px-3 py-2 tabular-nums text-slate-200">
+                    {% if row.pct_of_declared_peak is not none %}
+                      {{ "{:.1f}%".format(row.pct_of_declared_peak) }}
+                    {% else %}
+                      <span class="text-slate-600">n/a</span>
+                    {% endif %}
+                  </td>
+                  <td class="border-b border-slate-900 px-3 py-2 font-mono text-xs text-slate-300">
+                    {{ row.peak_shape }}
+                  </td>
                 </tr>
               {% endfor %}
             </tbody>

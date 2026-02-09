@@ -14,6 +14,7 @@
     <div class="grid gap-4 lg:grid-cols-[420px_1fr]">
       <form
         class="rounded-2xl border border-slate-800 bg-slate-950/40 p-5"
+        data-mamf-scaling-form
         method="get"
         hx-get="/scaling"
         hx-target="#scaling-result"
@@ -23,12 +24,13 @@
       >
         <div class="grid gap-4">
           <div>
-            <label class="text-xs text-slate-400">Dtype</label>
-            <select name="dtype" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm">
-              {% for dt in dtype_list %}
-                <option value="{{ dt }}" {% if dt == dtype %}selected{% endif %}>{{ dt }}</option>
+            <label class="text-xs text-slate-400">Series (hardware + dtype)</label>
+            <select name="configs" multiple size="8" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm">
+              {% for opt in config_options %}
+                <option value="{{ opt.value }}" {% if opt.value in configs %}selected{% endif %}>{{ opt.label }}</option>
               {% endfor %}
             </select>
+            <div class="mt-1 text-xs text-slate-500">Pick multiple dtypes per GPU (e.g. H100 bf16 and H100 fp8).</div>
           </div>
           {% if torch_versions %}
             <div>
@@ -47,15 +49,6 @@
               <option value="median_tflops" {% if metric == "median_tflops" %}selected{% endif %}>Median TFLOPS</option>
               <option value="max_tflops" {% if metric == "max_tflops" %}selected{% endif %}>Max TFLOPS</option>
             </select>
-          </div>
-          <div>
-            <label class="text-xs text-slate-400">Hardware (multi-select)</label>
-            <select name="hardware" multiple size="7" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm">
-              {% for hw in hardware_list %}
-                <option value="{{ hw }}" {% if hw in hardware %}selected{% endif %}>{{ hw }}</option>
-              {% endfor %}
-            </select>
-            <div class="mt-1 text-xs text-slate-500">Hold Ctrl/Cmd to select multiple.</div>
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>

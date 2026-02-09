@@ -2,20 +2,18 @@
 
 {% block content %}
   <div class="flex flex-col gap-6">
-    <div class="flex items-baseline justify-between gap-4">
-      <div>
-        <h1 class="text-xl font-semibold tracking-tight">Lookup Shape</h1>
-        <p class="mt-1 text-sm text-slate-400">Query a single (M, N, K) and get mean / median / max TFLOPS.</p>
-      </div>
+    <div>
+      <h1 class="text-xl font-semibold tracking-tight">Stability</h1>
+      <p class="mt-1 text-sm text-slate-400">Find shapes where max TFLOPS is much higher than typical (mean/median) performance.</p>
     </div>
 
-    <div class="grid gap-4 lg:grid-cols-[380px_1fr]">
+    <div class="grid gap-4 lg:grid-cols-[440px_1fr]">
       <form
         class="rounded-2xl border border-slate-800 bg-slate-950/40 p-5"
         method="get"
         data-mamf-single-hardware-form
-        hx-get="/lookup"
-        hx-target="#lookup-result"
+        hx-get="/stability"
+        hx-target="#stability-result"
         hx-swap="innerHTML"
         hx-indicator="#loading"
         hx-push-url="true"
@@ -24,12 +22,12 @@
           <div>
             <label class="text-xs text-slate-400">Hardware</label>
             <select name="hardware" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm">
-              <option value="{{ all_hardware_value }}" {% if hardware == all_hardware_value %}selected{% endif %}>All GPUs</option>
               {% for hw in hardware_list %}
                 <option value="{{ hw }}" {% if hw == hardware %}selected{% endif %}>{{ hw }}</option>
               {% endfor %}
             </select>
           </div>
+
           <div data-mamf-torch-group class="{% if (torch_versions | length) <= 1 %}hidden{% endif %}">
             <label class="text-xs text-slate-400">Torch</label>
             <select name="torch_version" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm">
@@ -38,6 +36,7 @@
               {% endfor %}
             </select>
           </div>
+
           <div>
             <label class="text-xs text-slate-400">Dtype</label>
             <select name="dtype" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm">
@@ -46,32 +45,40 @@
               {% endfor %}
             </select>
           </div>
-          <div class="grid grid-cols-3 gap-3">
+
+          <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="text-xs text-slate-400">M</label>
-              <input name="m" type="number" step="256" min="256" value="{{ m }}" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm" />
+              <label class="text-xs text-slate-400">Sort by</label>
+              <select name="sort_by" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm">
+                <option value="max_over_median" {% if sort_by == "max_over_median" %}selected{% endif %}>Max/Median (ratio)</option>
+                <option value="max_over_mean" {% if sort_by == "max_over_mean" %}selected{% endif %}>Max/Mean (ratio)</option>
+                <option value="max_minus_median" {% if sort_by == "max_minus_median" %}selected{% endif %}>Max - Median (delta)</option>
+              </select>
             </div>
             <div>
-              <label class="text-xs text-slate-400">N</label>
-              <input name="n" type="number" step="256" min="256" value="{{ n }}" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label class="text-xs text-slate-400">K</label>
-              <input name="k" type="number" step="256" min="256" value="{{ k }}" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm" />
+              <label class="text-xs text-slate-400">Row limit</label>
+              <input name="limit" type="number" step="1" min="10" max="5000" value="{{ limit }}" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm" />
             </div>
           </div>
+
+          <div>
+            <label class="text-xs text-slate-400">Min median TFLOPS (avoid divide-by-small)</label>
+            <input name="min_denominator" type="number" step="0.1" min="0" value="{{ min_denominator }}" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm" />
+          </div>
+
           <button type="submit" class="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-cyan-400">
-            Lookup
+            Run
           </button>
           <div class="text-xs text-slate-500">
-            Tip: results load instantly and the URL updates so you can share this exact query.
+            Useful for spotting shapes where best-case runs are much faster than typical runs.
           </div>
         </div>
       </form>
 
-      <div id="lookup-result">
-        {% include "partials/lookup_result.html" %}
+      <div id="stability-result">
+        {% include "partials/stability_result.html" %}
       </div>
     </div>
   </div>
 {% endblock %}
+

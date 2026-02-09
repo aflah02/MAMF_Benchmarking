@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path, PurePosixPath
 
 import modal
@@ -30,15 +31,21 @@ if missing and modal.is_local():
 image = (
     modal.Image.debian_slim(python_version="3.12")
     .uv_pip_install("fastapi", "uvicorn", "jinja2", "duckdb", "python-multipart")
+    .env(
+        {
+            "MAMF_DB_PATH": str(REMOTE_DIR / "matmul.duckdb"),
+            "PYTHONPATH": str(REMOTE_DIR),
+        }
+    )
     .add_local_file(LOCAL_DIR / "app.py", str(REMOTE_DIR / "app.py"))
     .add_local_file(LOCAL_DIR / "mamf_db.py", str(REMOTE_DIR / "mamf_db.py"))
     .add_local_dir(LOCAL_DIR / "templates", str(REMOTE_DIR / "templates"))
     .add_local_dir(LOCAL_DIR / "static", str(REMOTE_DIR / "static"))
     .add_local_file(DB_PATH, str(REMOTE_DIR / "matmul.duckdb"))
-    .env({"MAMF_DB_PATH": str(REMOTE_DIR / "matmul.duckdb")})
 )
 
-app = modal.App(name="mamf-explorer-new", image=image)
+app_name = os.getenv("MAMF_MODAL_APP_NAME", "mamf-explorer-new")
+app = modal.App(name=app_name, image=image)
 
 
 @app.function(timeout=60 * 10, min_containers=1)

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+  <script src="https://cdn.plot.ly/plotly-2.30.0.min.js" defer></script>
+{% endblock %}
+
+{% block content %}
+  <div class="flex flex-col gap-6">
+    <div>
+      <h1 class="text-xl font-semibold tracking-tight">FP8 vs BF16 Speedup</h1>
+      <p class="mt-1 text-sm text-slate-400">Compare FP8 against BF16 on the same GPU, shape, and torch version.</p>
+    </div>
+
+    <div class="grid gap-4 lg:grid-cols-[420px_1fr]">
+      <form
+        class="rounded-2xl border border-slate-800 bg-slate-950/40 p-5"
+        method="get"
+        data-mamf-single-hardware-form
+        hx-get="/speedup"
+        hx-target="#speedup-result"
+        hx-swap="innerHTML"
+        hx-indicator="#loading"
+        hx-push-url="true"
+      >
+        <div class="grid gap-4">
+          <div>
+            <label class="text-xs text-slate-400">Hardware</label>
+            <select name="hardware" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm">
+              {% for hw in hardware_list %}
+                <option value="{{ hw }}" {% if hw == hardware %}selected{% endif %}>{{ hw }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div data-mamf-torch-group class="{% if (torch_versions | length) <= 1 %}hidden{% endif %}">
+            <label class="text-xs text-slate-400">Torch</label>
+            <select name="torch_version" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm">
+              {% for tv in torch_versions %}
+                <option value="{{ tv }}" {% if tv == torch_version %}selected{% endif %}>{{ tv }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs text-slate-400">Metric</label>
+              <select name="metric" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm">
+                <option value="mean_tflops" {% if metric == "mean_tflops" %}selected{% endif %}>Mean TFLOPS</option>
+                <option value="median_tflops" {% if metric == "median_tflops" %}selected{% endif %}>Median TFLOPS</option>
+                <option value="max_tflops" {% if metric == "max_tflops" %}selected{% endif %}>Max TFLOPS</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-slate-400">K (0=any)</label>
+              <input name="k" type="number" step="256" min="0" value="{{ k }}" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs text-slate-400">Histogram bins</label>
+              <input name="bins" type="number" step="1" min="20" max="120" value="{{ bins }}" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-400">Top N rows</label>
+              <input name="top_n" type="number" step="1" min="10" max="200" value="{{ top_n }}" class="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm" />
+            </div>
+          </div>
+
+          <button type="submit" class="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-cyan-400">
+            Run
+          </button>
+          <div class="text-xs text-slate-500">
+            Speedup = FP8 / BF16 for the selected metric (matched by M,N,K).
+          </div>
+        </div>
+      </form>
+
+      <div id="speedup-result">
+        {% include "partials/speedup_result.html" %}
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

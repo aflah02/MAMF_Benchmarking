@@ -39,6 +39,7 @@ FILES: dict[str, list[str]] = {
     "H200-py3.12-torch2.9.0-bf16": [
         "UI/outputs/mamf_2026-01-12-18-27-30_H200_py3.12_torch2.9.0_base_img-debian-slim_ResumeFrom-12032x7680x17408.txt",
         "UI/outputs/mamf_2026-01-06-20-19-39_H200_py3.12_torch2.9.0_base_img-debian-slim.json",
+        "UI/outputs/mamf_2026-01-14-05-58-36_H200_py3.12_torch2.9.0_base_img-debian-slim_ResumeFrom-16896x19712x10496.txt"
     ],
     "B200-py3.12-torch2.9.0-bf16": [
         "UI/outputs/mamf_2026-01-06-20-15-12_B200_py3.12_torch2.9.0_base_img-debian-slim.json",
