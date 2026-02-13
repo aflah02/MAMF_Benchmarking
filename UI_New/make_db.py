@@ -52,15 +52,27 @@ FILES: dict[str, list[str]] = {
         "UI/outputs/mamf_2026-02-07-19-06-08_A100-80GB_py3.12_torch2.9.0_base_img-debian-slim_ResumeFrom-14336x13312x19456.txt",
         "UI/outputs/mamf_2026-02-05-18-57-13_A100-80GB_py3.12_torch2.9.0_base_img-debian-slim_ResumeFrom-12288x13568x1280.txt",
         "UI/outputs/mamf_2026-01-14-23-15-04_A100-80GB_py3.12_torch2.9.0_base_img-debian-slim_ResumeFrom-9728x17152x3584.txt",
-        "UI/outputs/mamf_2026-01-12-18-41-36_A100-80GB_py3.12_torch2.9.0_base_img-debian-slim_ResumeFrom-6912x9216x17664.txt",
-        "UI/outputs/mamf_2026-01-06-18-39-31_A100-80GB_py3.12_torch2.9.0_base_img-debian-slim.json",
+        # "UI/outputs/mamf_2026-01-12-18-41-36_A100-80GB_py3.12_torch2.9.0_base_img-debian-slim_ResumeFrom-6912x9216x17664.txt", - PCIe Version
+        # "UI/outputs/mamf_2026-01-06-18-39-31_A100-80GB_py3.12_torch2.9.0_base_img-debian-slim.json", - PCIe Version
+        'UI/outputs/mamf_2026-02-08-19-18-48_A100-80GB_py3.12_torch2.9.0_base_img-debian-slim_ResumeFrom-16128x12032x2304.txt',
+        'UI/outputs/mamf_2026-02-09-10-34-12_A100-80GB_py3.12_torch2.9.0_base_img-debian-slim_ResumeFrom-None.txt',
+        "UI/outputs/mamf_2026-02-09-19-26-13_A100-80GB_py3.12_torch2.9.0_base_img-debian-slim_ResumeFrom-17920x9472x19712.txt",
+        "UI/outputs/mamf_2026-02-10-13-09-08_A100-80GB_py3.12_torch2.9.0_base_img-debian-slim_ResumeFrom-7424x11520x18176.txt",
+        "UI/outputs/mamf_2026-02-11-10-24-41_A100-80GB_py3.12_torch2.9.0_base_img-debian-slim_ResumeFrom-19200x19456x11776.txt"
     ],
     "A100-40GB-py3.12-torch2.9.0-bf16": [
-        "UI/outputs/mamf_2026-02-07-19-05-37_A100-40GB_py3.12_torch2.9.0_base_img-debian-slim_ResumeFrom-14592x19200x3328.txt",
+        "UI/outputs/mamf_2026-01-06-20-17-56_A100-40GB_py3.12_torch2.9.0_base_img-debian-slim.json", # Ends at 7168x15360x14592
+        "UI/outputs/mamf_2026-01-12-18-42-31_A100-40GB_py3.12_torch2.9.0_base_img-debian-slim_ResumeFrom-7168x15360x14592.txt", # Ends at 10240x17152x3072
+        "UI/outputs/mamf_2026-02-12-06-57-59_A100-40GB_py3.12_torch2.9.0_base_img-debian-slim_ResumeFrom-10240x17152x3072.txt",
+        "UI/outputs/mamf_2026-02-13-14-06-37_A100-40GB_py3.12_torch2.9.0_base_img-debian-slim_ResumeFrom-12544x20224x7680.txt",
         "UI/outputs/mamf_2026-02-05-18-59-15_A100-40GB_py3.12_torch2.9.0_base_img-debian-slim_ResumeFrom-12800x5376x15616.txt",
-        "UI/outputs/mamf_2026-01-14-23-29-38_A100-40GB_py3.12_torch2.9.0_base_img-debian-slim_ResumeFrom-10240x17152x3072.txt",
-        "UI/outputs/mamf_2026-01-12-18-42-31_A100-40GB_py3.12_torch2.9.0_base_img-debian-slim_ResumeFrom-7168x15360x14592.txt",
-        "UI/outputs/mamf_2026-01-06-20-17-56_A100-40GB_py3.12_torch2.9.0_base_img-debian-slim.json",
+        "UI/outputs/mamf_2026-02-07-19-05-37_A100-40GB_py3.12_torch2.9.0_base_img-debian-slim_ResumeFrom-14592x19200x3328.txt",
+        # Get-Content path\to\file.txt -Tail 10
+        # "UI/outputs/mamf_2026-01-14-23-29-38_A100-40GB_py3.12_torch2.9.0_base_img-debian-slim_ResumeFrom-10240x17152x3072.txt", # A100 80 GB Version Allocated
+        
+        "UI/outputs/mamf_2026-02-08-19-19-07_A100-40GB_py3.12_torch2.9.0_base_img-debian-slim_ResumeFrom-16384x17664x6400.txt",
+        "UI/outputs/mamf_2026-02-09-19-25-19_A100-40GB_py3.12_torch2.9.0_base_img-debian-slim_ResumeFrom-17920x19456x13056.txt",
+        "UI/outputs/mamf_2026-02-11-10-32-03_A100-40GB_py3.12_torch2.9.0_base_img-debian-slim_ResumeFrom-19456x17664x3328.txt"
     ],
     "A40-py3.12-torch2.9.0-bf16": [
         "UI/local_run_outputs/a40_mamf_bf16",
@@ -94,11 +106,21 @@ def parse_group_key(key: str) -> LogGroup:
     m = _KEY_RE.match(key.strip())
     if not m:
         raise ValueError(f"Invalid group key format: {key}")
+
+    torch_version=m.group("torch_version").removeprefix("torch")   
+
+    if torch_version == '2.9.0' or torch_version == '2.8.0':
+        torch_version += '+cu128'
+    elif torch_version == '2.7.1':
+        torch_version += '+cu126'
+
+    print(f"Parsed torch version: {torch_version} from key: {key}")
+
     return LogGroup(
         key=key,
         hardware_key=m.group("hardware"),
         python_version=m.group("python_version").removeprefix("py"),
-        torch_version=m.group("torch_version").removeprefix("torch"),
+        torch_version=torch_version,
         dtype_key=m.group("dtype"),
     )
 

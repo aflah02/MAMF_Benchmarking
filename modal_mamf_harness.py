@@ -9,7 +9,7 @@ from pathlib import Path
 import modal
 
 BASE_IMAGE="debian-slim"
-GPU = "A100-80GB" # Change to your desired GPU type
+GPU = "A100-40GB" # Change to your desired GPU type
 PYTHON_VERSION = "3.12" # Change to your desired Python version
 TORCH_VERSION = "2.9.0" # Change to your desired PyTorch version
 
@@ -18,8 +18,8 @@ M_RANGE = "0 20480 256"
 N_RANGE = "0 20480 256"
 K_RANGE = "0 20480 256"
 
-# RESUME_FROM = "16384x17664x6400"
-RESUME_FROM = None
+RESUME_FROM = "12544x20224x7680" # Need to cancel once it crosses 12800x5376x15616
+# RESUME_FROM = None
 
 # DTYPE = "float8_e4m3fn"
 DTYPE = "bfloat16"

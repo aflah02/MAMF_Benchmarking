@@ -38,21 +38,21 @@
 
           <div class="grid gap-3 {% if stats.torch_version_count is defined %}sm:grid-cols-4{% else %}sm:grid-cols-3{% endif %}">
             <div class="rounded-2xl border border-slate-800 bg-slate-950/35 p-4">
-              <div class="text-xs text-slate-400">Rows</div>
+              <div class="text-xs text-slate-400">Matmul Performed</div>
               <div class="mt-1 text-2xl font-semibold tabular-nums">{{ "{:,}".format(stats.total_rows) }}</div>
             </div>
             <div class="rounded-2xl border border-slate-800 bg-slate-950/35 p-4">
-              <div class="text-xs text-slate-400">Hardware</div>
+              <div class="text-xs text-slate-400">GPUs Tested</div>
               <div class="mt-1 text-2xl font-semibold tabular-nums">{{ stats.hardware_count }}</div>
             </div>
             {% if stats.torch_version_count is defined %}
               <div class="rounded-2xl border border-slate-800 bg-slate-950/35 p-4">
-                <div class="text-xs text-slate-400">Torch versions</div>
+                <div class="text-xs text-slate-400">PyTorch Versions Used</div>
                 <div class="mt-1 text-2xl font-semibold tabular-nums">{{ stats.torch_version_count }}</div>
               </div>
             {% endif %}
             <div class="rounded-2xl border border-slate-800 bg-slate-950/35 p-4">
-              <div class="text-xs text-slate-400">Dtypes</div>
+              <div class="text-xs text-slate-400">Data Types Evaluated</div>
               <div class="mt-1 text-2xl font-semibold tabular-nums">{{ stats.dtype_count }}</div>
             </div>
           </div>
@@ -287,7 +287,7 @@
               MAMF (Maximum Achievable Matmul FLOPS) is a practical upper bound on matrix-multiplication throughput for a given GPU + software stack (PyTorch/CUDA/cuBLAS, etc). The benchmark sweeps many (M, N, K) shapes and records the best achieved TFLOPS for each shape, giving you a map of where the hardware is fast and where performance cliffs are.
             </p>
             <p class="mt-3 text-sm text-slate-300">
-              Note: The reported results use a Debian-slim based image with Python 3.12. Some runs (L40S, A40, and V100) were performed on other hardware.
+              Note: The reported results use a Debian-slim based image with Python 3.12 for all Modal runs. Some runs (L40S, A40, and V100) were performed on other hardware but use the same pytorch/python versions.
             </p>
 
             <div class="mt-4">

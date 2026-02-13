@@ -44,7 +44,7 @@ image = (
     .add_local_file(DB_PATH, str(REMOTE_DIR / "matmul.duckdb"))
 )
 
-app_name = os.getenv("MAMF_MODAL_APP_NAME", "mamf-explorer-new")
+app_name = os.getenv("MAMF_MODAL_APP_NAME", "mamf-explorer")
 app = modal.App(name=app_name, image=image)
 
 
