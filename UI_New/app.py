@@ -257,7 +257,7 @@ def create_app() -> FastAPI:
         return "ok"
 
     @fastapi_app.get("/", response_class=HTMLResponse)
-    def home(request: Request) -> HTMLResponse:
+    def home(request: Request, sort_by: str = "default") -> HTMLResponse:
         stats = db_stats(db_path)
         coverage = hardware_coverage(db_path)
         coverage_by_config = hardware_coverage_by_config(db_path)
@@ -361,6 +361,19 @@ def create_app() -> FastAPI:
                         hw_first = False
                         tv_first = False
 
+        # Apply sorting based on sort_by parameter (removes grouping)
+        if sort_by == "peak_flops":
+            coverage_rows.sort(key=lambda x: (x.get("peak_tflops") or -1), reverse=True)
+        elif sort_by == "peak_flop_pct":
+            coverage_rows.sort(key=lambda x: (x.get("pct_of_declared_peak") or -1), reverse=True)
+        
+        # Update rowspan flags after sorting (every row now stands alone)
+        for i, row in enumerate(coverage_rows):
+            row["show_hardware"] = True
+            row["hardware_rowspan"] = 1
+            row["show_torch"] = True
+            row["torch_rowspan"] = 1
+
         return render(
             request,
             "home.html",
@@ -372,6 +385,7 @@ def create_app() -> FastAPI:
                 "baseline_torch_version": baseline_torch_version,
                 "multi_torch_hardware": multi_torch_hardware,
                 "multi_torch_versions": multi_torch_versions,
+                "sort_by": sort_by,
             },
         )
 

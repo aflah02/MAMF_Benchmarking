@@ -320,7 +320,19 @@
     <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-6">
       <div class="flex items-baseline justify-between gap-4">
         <h2 class="text-lg font-semibold">Coverage</h2>
-        <div class="text-xs text-slate-500">peak = max(max_tflops) per config</div>
+        <div class="flex items-center gap-3">
+          <label for="sort-select" class="text-xs text-slate-500">Sort by:</label>
+          <select 
+            id="sort-select" 
+            class="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm text-slate-100 hover:border-slate-600 focus:border-cyan-500 focus:outline-none"
+            onchange="window.location.href = '/?sort_by=' + this.value"
+          >
+            <option value="default" {% if sort_by == 'default' %}selected{% endif %}>Default</option>
+            <option value="peak_flops" {% if sort_by == 'peak_flops' %}selected{% endif %}>Peak FLOPS (desc)</option>
+            <option value="peak_flop_pct" {% if sort_by == 'peak_flop_pct' %}selected{% endif %}>Peak FLOP% (desc)</option>
+          </select>
+          <div class="text-xs text-slate-500">peak = max(max_tflops) per config</div>
+        </div>
       </div>
       {% if not coverage_rows %}
         <div class="mt-3 rounded-xl border border-slate-800 bg-slate-950/40 p-4 text-sm text-slate-300">
