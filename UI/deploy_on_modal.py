@@ -1,39 +1,56 @@
-import subprocess
+from __future__ import annotations
+
+import os
 from pathlib import Path, PurePosixPath
-import shlex
+
 import modal
 
-LOCAL_UI_DIR = Path(__file__).resolve().parent
-REMOTE_UI_DIR = PurePosixPath("/root")
+LOCAL_DIR = Path(__file__).resolve().parent
+REPO_ROOT = LOCAL_DIR.parent
+
+DB_CANDIDATES = [
+    LOCAL_DIR / "matmul.duckdb",
+    REPO_ROOT / "UI" / "matmul.duckdb",
+]
+DB_PATH = next((p for p in DB_CANDIDATES if p.exists()), DB_CANDIDATES[0])
+
+REMOTE_DIR = PurePosixPath("/root")
 
 REQUIRED_LOCAL_PATHS = [
-    LOCAL_UI_DIR / "app.py",
-    LOCAL_UI_DIR / "home.py",
-    LOCAL_UI_DIR / "ui_common.py",
-    LOCAL_UI_DIR / "matmul.duckdb",
-    LOCAL_UI_DIR / "pages",
+    LOCAL_DIR / "app.py",
+    LOCAL_DIR / "mamf_db.py",
+    LOCAL_DIR / "templates",
+    LOCAL_DIR / "static",
+    DB_PATH,
 ]
 
-missing = [str(path) for path in REQUIRED_LOCAL_PATHS if not path.exists()]
+missing = [str(p) for p in REQUIRED_LOCAL_PATHS if not p.exists()]
 if missing and modal.is_local():
     raise RuntimeError(f"Missing required UI files/dirs: {', '.join(missing)}")
 
 image = (
-    modal.Image.debian_slim(python_version="3.13")
-    .uv_pip_install("streamlit", "numpy", "pandas", "duckdb", "plotly")
-    .add_local_file(LOCAL_UI_DIR / "app.py", str(REMOTE_UI_DIR / "app.py"))
-    .add_local_file(LOCAL_UI_DIR / "home.py", str(REMOTE_UI_DIR / "home.py"))
-    .add_local_file(LOCAL_UI_DIR / "ui_common.py", str(REMOTE_UI_DIR / "ui_common.py"))
-    .add_local_file(LOCAL_UI_DIR / "matmul.duckdb", str(REMOTE_UI_DIR / "matmul.duckdb"))
-    .add_local_dir(LOCAL_UI_DIR / "pages", str(REMOTE_UI_DIR / "pages"))
+    modal.Image.debian_slim(python_version="3.12")
+    .uv_pip_install("fastapi", "uvicorn", "jinja2", "duckdb", "python-multipart")
+    .env(
+        {
+            "MAMF_DB_PATH": str(REMOTE_DIR / "matmul.duckdb"),
+            "PYTHONPATH": str(REMOTE_DIR),
+        }
+    )
+    .add_local_file(LOCAL_DIR / "app.py", str(REMOTE_DIR / "app.py"))
+    .add_local_file(LOCAL_DIR / "mamf_db.py", str(REMOTE_DIR / "mamf_db.py"))
+    .add_local_dir(LOCAL_DIR / "templates", str(REMOTE_DIR / "templates"))
+    .add_local_dir(LOCAL_DIR / "static", str(REMOTE_DIR / "static"))
+    .add_local_file(DB_PATH, str(REMOTE_DIR / "matmul.duckdb"))
 )
 
-app = modal.App(name="mamf-explorer", image=image)
+app_name = os.getenv("MAMF_MODAL_APP_NAME", "mamf-explorer")
+app = modal.App(name=app_name, image=image)
 
 
 @app.function(timeout=60 * 10, min_containers=1)
-@modal.web_server(8000)
-def run_streamlit():
-    target = shlex.quote(str(REMOTE_UI_DIR / "app.py"))
-    cmd = f"streamlit run {target} --server.port 8000 --server.enableCORS=false --server.enableXsrfProtection=false"
-    subprocess.Popen(cmd, shell=True)
+@modal.asgi_app()
+def web():
+    from app import app as fastapi_app
+
+    return fastapi_app

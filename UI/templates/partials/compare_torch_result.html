@@ -1,0 +1,58 @@
+{% if not has_query %}
+  <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-6 text-sm text-slate-300">
+    Set filters and click <span class="font-medium text-slate-100">Compare</span>.
+  </div>
+{% elif (rows | length) == 0 %}
+  <div class="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6 text-sm text-amber-100">
+    No rows found:
+    <span class="font-mono text-xs">{{ hardware }} · {{ dtype }} · {{ m }}×{{ n }}×{{ k }}</span>
+  </div>
+{% else %}
+  <div class="flex flex-col gap-4">
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-6">
+      <div class="text-xs text-slate-400">Shape</div>
+      <div class="mt-1 font-mono text-xs text-slate-300">
+        {{ hardware }} · {{ dtype }} · {{ m }}×{{ n }}×{{ k }} · rows={{ rows | length }}
+      </div>
+    </div>
+
+    {% if plotly_spec %}
+      <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+        <div data-plotly>
+          <script type="application/json" data-plotly-spec>{{ plotly_spec | safe }}</script>
+          <div class="h-[520px]" data-plotly-target></div>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-6">
+      <div class="flex items-baseline justify-between gap-4">
+        <h3 class="text-sm font-semibold">Table</h3>
+        <div class="text-xs text-slate-500">torch_version · mean · median · max</div>
+      </div>
+      <div class="mt-3 overflow-x-auto">
+        <table class="w-full min-w-[640px] border-separate border-spacing-0 text-sm">
+          <thead>
+            <tr class="text-left text-xs text-slate-400">
+              <th class="border-b border-slate-800 px-3 py-2">Torch</th>
+              <th class="border-b border-slate-800 px-3 py-2">Mean TFLOPS</th>
+              <th class="border-b border-slate-800 px-3 py-2">Median TFLOPS</th>
+              <th class="border-b border-slate-800 px-3 py-2">Max TFLOPS</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in rows %}
+              <tr class="hover:bg-slate-900/40">
+                <td class="border-b border-slate-900 px-3 py-2 font-mono text-xs text-slate-300">{{ r.torch_version }}</td>
+                <td class="border-b border-slate-900 px-3 py-2 tabular-nums text-slate-200">{{ "{:.1f}".format(r.mean_tflops) }}</td>
+                <td class="border-b border-slate-900 px-3 py-2 tabular-nums text-slate-200">{{ "{:.1f}".format(r.median_tflops) }}</td>
+                <td class="border-b border-slate-900 px-3 py-2 tabular-nums text-slate-200">{{ "{:.1f}".format(r.max_tflops) }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endif %}
+

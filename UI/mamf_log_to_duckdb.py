@@ -19,11 +19,17 @@ LOG_LINE_RE = re.compile(
 )
 
 DTYPE_RE = re.compile(r"\*\* Dtype:\s+(.+)")
-CUDA_DEVICE_RE = re.compile(r"name='([^']+)'")  # <-- key fix
+CUDA_DEVICE_RE = re.compile(r"name='([^']+)'")
+TORCH_VERSION_RE = re.compile(r"torch=([\d.]+\+cu\d+)")
+PLATFORM_RE = re.compile(r"^- Linux (.+?)\s+\d+\.\d+\.\d+\.\d+-.+\s+#\d+\s+SMP.*$")
+PLATFORM_RE_FALLBACK = re.compile(r"^- Linux (.+?)\s+.*$")
+
 
 def parse_log_file(path):
     dtype = None
     hardware = None
+    torch_version = None
+    platform = None
     rows = []
 
     with open(path, "r", errors="ignore") as f:
@@ -38,6 +44,20 @@ def parse_log_file(path):
                 if m:
                     hardware = m.group(1)
 
+            if torch_version is None:
+                m = TORCH_VERSION_RE.search(line)
+                if m:
+                    torch_version = m.group(1)
+
+            if platform is None and line.startswith("- Linux "):
+                m = PLATFORM_RE.match(line)
+                if m:
+                    platform = m.group(1).strip()
+                else:
+                    m = PLATFORM_RE_FALLBACK.match(line)
+                    if m:
+                        platform = m.group(1).strip()
+
             m = LOG_LINE_RE.search(line)
             if m:
                 if hardware is None or dtype is None:
@@ -49,6 +69,8 @@ def parse_log_file(path):
                     (
                         hardware,
                         dtype,
+                        torch_version,
+                        platform,
                         int(m.group("m")),
                         int(m.group("n")),
                         int(m.group("k")),
@@ -67,6 +89,8 @@ def parse_log_file(path):
         columns=[
             "hardware",
             "dtype",
+            "torch_version",
+            "platform",
             "m",
             "n",
             "k",

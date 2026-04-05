@@ -1,0 +1,61 @@
+{% if not has_query %}
+  <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-6 text-sm text-slate-300">
+    Set filters and click <span class="font-medium text-slate-100">Run</span>.
+  </div>
+{% elif (rows | length) == 0 %}
+  <div class="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6 text-sm text-amber-100">
+    No rows found for:
+    <span class="font-mono text-xs">
+      {{ hardware }}{% if torch_version %} &middot; torch={{ torch_version }}{% endif %} &middot; {{ dtype }}
+    </span>
+  </div>
+{% else %}
+  <div class="flex flex-col gap-4">
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-6">
+      <div class="text-xs text-slate-400">Query</div>
+      <div class="mt-1 font-mono text-xs text-slate-300">
+        {{ hardware }}{% if torch_version %} &middot; torch={{ torch_version }}{% endif %} &middot; {{ dtype }} &middot; sort={{ sort_by }} &middot; rows={{ rows | length }}
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-6">
+      <div class="flex items-baseline justify-between gap-4">
+        <h3 class="text-sm font-semibold">Outliers</h3>
+        <div class="text-xs text-slate-500">max vs typical</div>
+      </div>
+      <div class="mt-3 overflow-x-auto">
+        <table class="w-full min-w-[980px] border-separate border-spacing-0 text-sm">
+          <thead>
+            <tr class="text-left text-xs text-slate-400">
+              <th class="border-b border-slate-800 px-3 py-2">M</th>
+              <th class="border-b border-slate-800 px-3 py-2">N</th>
+              <th class="border-b border-slate-800 px-3 py-2">K</th>
+              <th class="border-b border-slate-800 px-3 py-2">Mean</th>
+              <th class="border-b border-slate-800 px-3 py-2">Median</th>
+              <th class="border-b border-slate-800 px-3 py-2">Max</th>
+              <th class="border-b border-slate-800 px-3 py-2">Max/Mean</th>
+              <th class="border-b border-slate-800 px-3 py-2">Max/Median</th>
+              <th class="border-b border-slate-800 px-3 py-2">Max-Median</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in rows %}
+              <tr class="hover:bg-slate-900/40">
+                <td class="border-b border-slate-900 px-3 py-2 font-mono text-xs text-slate-200">{{ r.m }}</td>
+                <td class="border-b border-slate-900 px-3 py-2 font-mono text-xs text-slate-200">{{ r.n }}</td>
+                <td class="border-b border-slate-900 px-3 py-2 font-mono text-xs text-slate-200">{{ r.k }}</td>
+                <td class="border-b border-slate-900 px-3 py-2 tabular-nums text-slate-200">{{ "{:.2f}".format(r.mean_tflops) }}</td>
+                <td class="border-b border-slate-900 px-3 py-2 tabular-nums text-slate-200">{{ "{:.2f}".format(r.median_tflops) }}</td>
+                <td class="border-b border-slate-900 px-3 py-2 tabular-nums text-slate-200">{{ "{:.2f}".format(r.max_tflops) }}</td>
+                <td class="border-b border-slate-900 px-3 py-2 tabular-nums text-slate-300">{% if r.max_over_mean is not none %}{{ "{:.3f}×".format(r.max_over_mean) }}{% endif %}</td>
+                <td class="border-b border-slate-900 px-3 py-2 tabular-nums text-slate-300">{% if r.max_over_median is not none %}{{ "{:.3f}×".format(r.max_over_median) }}{% endif %}</td>
+                <td class="border-b border-slate-900 px-3 py-2 tabular-nums text-slate-300">{% if r.max_minus_median is not none %}{{ "{:.2f}".format(r.max_minus_median) }}{% endif %}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
